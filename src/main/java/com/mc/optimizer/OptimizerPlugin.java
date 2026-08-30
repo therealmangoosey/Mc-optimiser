@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 import org.bukkit.Bukkit;
+import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -148,11 +149,15 @@ public final class OptimizerPlugin extends JavaPlugin {
     }
 
     public void reload() {
+        HandlerList.unregisterAll(this);
         shutdownComponents();
         reloadConfig();
         configManager.loadConfig();
         detectConflictsIfEnabled();
         initializeComponents();
+        OptimizerCommand command = new OptimizerCommand(this);
+        getCommand("mcoptimizer").setExecutor(command);
+        getCommand("mcoptimizer").setTabCompleter(command);
         getLogger().info("MCOptimizer reloaded.");
     }
 
