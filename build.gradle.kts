@@ -11,11 +11,19 @@ repositories {
 }
 
 dependencies {
-    // Dynamic range picks up the latest 26.2 build. Pin to an exact build
-    // string (e.g. "26.2.build.119-stable") instead if you want reproducible
-    // builds - check https://repo.papermc.io/repository/maven-public/io/papermc/paper/paper-api/
-    // for available builds.
-    compileOnly("io.papermc.paper:paper-api:[26.2.build,)")
+    // Pinned to an exact build for reproducible CI builds.
+    //
+    // NOTE: do NOT go back to the dynamic range "[26.2.build,)". Gradle splits
+    // versions on [. - _ +] and on letter/digit boundaries, and treats the
+    // string parts "rc", "release" and "final" as HIGHER than any other string
+    // part. So "26.2-rc-2.build.9-alpha" -> [26,2,rc,2,...] sorts ABOVE
+    // "26.2.build.121-stable" -> [26,2,build,121,...] because "rc" > "build".
+    // The range would therefore resolve to an old release-candidate alpha, and
+    // being open-ended it would also drift onto 26.3/27.x once those publish.
+    //
+    // Check https://repo.papermc.io/repository/maven-public/io/papermc/paper/paper-api/
+    // for newer builds and bump this deliberately.
+    compileOnly("io.papermc.paper:paper-api:26.2.build.121-stable")
     // paper-api declares org.jetbrains:annotations as compileOnly and does not
     // inject it into its published POM, so consumers must declare it themselves.
     compileOnly("org.jetbrains:annotations:26.0.2")
