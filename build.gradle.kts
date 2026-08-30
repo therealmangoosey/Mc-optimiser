@@ -20,8 +20,6 @@ repositories {
 }
 
 dependencies {
-    // Compile against the Spigot API, which contains the Bukkit API.
-    // Avoid Paper-only APIs so the same JAR targets Bukkit/Spigot and Paper.
     compileOnly("org.spigotmc:spigot-api:26.2-R0.1-SNAPSHOT")
     compileOnly("org.jetbrains:annotations:26.0.2")
 }
@@ -36,8 +34,13 @@ tasks.compileJava {
     options.encoding = "UTF-8"
 }
 
+tasks.jar {
+    archiveBaseName.set("MCOptimizer")
+    archiveVersion.set(project.version.toString())
+}
+
 tasks.processResources {
-    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     filesMatching("plugin.yml") {
         expand("version" to project.version.toString())
     }
