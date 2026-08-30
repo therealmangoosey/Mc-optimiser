@@ -1,44 +1,51 @@
 # MCOptimizer
 
-MCOptimizer is a Paper/Spigot server optimization plugin targeting Minecraft 26.2 and Java 25.
+MCOptimizer is a server-side Paper optimization plugin for Minecraft 26.2.
 
-## Version
+## Requirements
 
-The version is defined in `src/main/resources/config.yml` on the `# Version:` line. Gradle reads that value automatically, injects it into `plugin.yml`, names the JAR/ZIP with it, and uses it for the GitHub Release tag.
+- Paper 26.2
+- Java 25
 
-## Build
+Spigot-compatible metadata is retained, but Paper 26.2 is the supported target.
 
-The repository includes the Gradle wrapper. Run:
+## Installation
+
+1. Download the `MCOptimizer-<version>.jar` release file.
+2. Put the JAR in your server's `plugins/` directory.
+3. Restart the server.
+4. Configure `plugins/MCOptimizer/config.yml` if needed.
+
+Do not upload the source ZIP or build ZIP as the Modrinth primary file. The plugin JAR is the file intended for server installation.
+
+## Building
+
+The repository includes the Gradle wrapper.
 
 ```bash
 ./gradlew clean build
 ```
 
-The plugin JAR is written to:
+The release JAR is generated as:
 
 ```text
 build/libs/MCOptimizer-<version>.jar
 ```
 
-## GitHub Actions
-
-Every push to `main`, pull request, or manual workflow run builds the plugin with Java 25. Successful pushes to `main` also publish a GitHub Release using the version from `config.yml` and attach:
-
-```text
-MCOptimizer-<version>.jar
-MCOptimizer-<version>.zip
-```
-
-Pull requests build and validate the project but do not publish releases.
-
-## Install
-
-Copy the generated JAR into the server's `plugins/` directory and restart the Paper/Spigot server.
+The version is defined by the `# Version:` line in `src/main/resources/config.yml` and is injected into `plugin.yml` by Gradle.
 
 ## Compatibility
 
-- Minecraft / Paper API: 26.2
-- Java: 25
-- Build system: Gradle 9.1.0
+MCOptimizer targets Paper 26.2 and Java 25. The project uses legacy `plugin.yml` metadata for the plugin descriptor.
 
-The project uses legacy `plugin.yml` metadata for broad Paper/Spigot compatibility. The removed `paper-plugin.yml` contained invalid dependency metadata for the current Paper plugin format.
+## Configuration and safety
+
+MCOptimizer exposes several optimization systems through `config.yml`. Features that can change gameplay or have limited benefit on modern Paper are kept conservative or disabled by default rather than silently changing server behaviour.
+
+Always test configuration changes on a backup or staging server before using them on a production world.
+
+## Releases
+
+GitHub Actions builds the plugin on pushes to `main`, pull requests, and manual runs. Release builds publish the versioned plugin JAR and source ZIP to GitHub Releases.
+
+For Modrinth, upload the versioned plugin JAR as the primary file and set the version's Minecraft compatibility to 26.2.
