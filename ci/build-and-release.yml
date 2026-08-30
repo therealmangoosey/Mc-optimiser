@@ -1,0 +1,122 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  pull_request:
+  workflow_dispatch:
+
+# Serialise runs per ref so two pushes to main can't race while
+# recreating the rolling "latest" release.
+concurrency:
+  group: build-and-release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write   # needed to create/update releases and their tags
+
+jobs:
+  build:
+    name: Build JAR
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      # Paper 26.2 targets Java 25, and build.gradle.kts requests a Java 25
+      # toolchain. Installing it here means Gradle resolves the toolchain
+      # locally instead of having to download one via the foojay resolver.
+      - name: Set up JDK 25
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      # We deliberately run a downloaded Gradle rather than ./gradlew.
+      # The gradle-wrapper.jar committed to this repo does NOT match the
+      # published checksum for the Gradle version named in
+      # gradle-wrapper.properties, so wrapper validation would fail and the
+      # wrapper is not a trustworthy bootstrapper for CI. Regenerate it with
+      #   gradle wrapper --gradle-version 9.1.0
+      # and then this job can be switched back to ./gradlew with
+      # validate-wrappers left at its default of true.
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.1.0'
+          validate-wrappers: false
+
+      - name: Build
+        run: gradle --stacktrace build
+
+      - name: Locate built JAR
+        id: jar
+        run: |
+          set -euo pipefail
+          # Exclude -sources/-javadoc in case those artifacts get enabled later.
+          jar="$(find build/libs -maxdepth 1 -name '*.jar' \
+                   ! -name '*-sources.jar' ! -name '*-javadoc.jar' | sort | head -n1)"
+          if [ -z "$jar" ]; then
+            echo "::error::No JAR produced in build/libs"
+            ls -la build/libs || true
+            exit 1
+          fi
+          echo "path=$jar" >> "$GITHUB_OUTPUT"
+          echo "name=$(basename "$jar")" >> "$GITHUB_OUTPUT"
+          echo "Built $jar"
+
+      # Runs for every trigger, including pull requests. On a PR this is the
+      # only output: no release is created or modified.
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MCOptimizer-${{ github.sha }}
+          path: ${{ steps.jar.outputs.path }}
+          if-no-files-found: error
+
+      # ----- rolling "latest" release, main pushes only -----
+      # Marked as a prerelease so it never steals the "Latest" badge from a
+      # real tagged version. Deleted and recreated so the tag follows main.
+      - name: Publish rolling "latest" release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          set -euo pipefail
+          if gh release view latest >/dev/null 2>&1; then
+            echo "Removing previous rolling release"
+            gh release delete latest --yes --cleanup-tag
+          fi
+          gh release create latest \
+            --target "$GITHUB_SHA" \
+            --title "Latest development build" \
+            --notes "Rolling build of \`main\` at ${GITHUB_SHA}.
+
+          Built against paper-api 26.2.build.121-stable, Java 25.
+          This is an automated development build, not a tagged release." \
+            --prerelease \
+            "${{ steps.jar.outputs.path }}"
+
+      # ----- versioned release, v* tags only -----
+      - name: Publish tagged release
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME}"
+          if gh release view "$version" >/dev/null 2>&1; then
+            # Re-running a tag build should refresh the asset, not hard-fail.
+            gh release upload "$version" "${{ steps.jar.outputs.path }}" --clobber
+          else
+            gh release create "$version" \
+              --target "$GITHUB_SHA" \
+              --title "$version" \
+              --notes "MCOptimizer $version
+
+          Built against paper-api 26.2.build.121-stable, Java 25." \
+              --latest \
+              "${{ steps.jar.outputs.path }}"
+          fi
