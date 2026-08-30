@@ -1,13 +1,14 @@
 # MCOptimizer
 
-MCOptimizer is a server-side Paper optimization plugin for Minecraft 26.2.
+MCOptimizer is a server-side Minecraft optimization plugin designed to run on Bukkit-compatible servers, including Bukkit, Spigot, and Paper.
 
 ## Requirements
 
-- Paper 26.2
+- Minecraft 26.2
 - Java 25
+- A Bukkit-compatible server implementation: Bukkit, Spigot, or Paper
 
-Spigot-compatible metadata is retained, but Paper 26.2 is the supported target.
+The same plugin JAR is built against the Spigot API, which contains the Bukkit API. No Paper-only API is required by the plugin source.
 
 ## Installation
 
@@ -16,7 +17,7 @@ Spigot-compatible metadata is retained, but Paper 26.2 is the supported target.
 3. Restart the server.
 4. Configure `plugins/MCOptimizer/config.yml` if needed.
 
-Do not upload the source ZIP or build ZIP as the Modrinth primary file. The plugin JAR is the file intended for server installation.
+Do not upload the source ZIP or build ZIP as the primary plugin file. The plugin JAR is the file intended for server installation.
 
 ## Building
 
@@ -36,11 +37,17 @@ The version is defined by the `# Version:` line in `src/main/resources/config.ym
 
 ## Compatibility
 
-MCOptimizer targets Paper 26.2 and Java 25. The project uses legacy `plugin.yml` metadata for the plugin descriptor.
+MCOptimizer is compiled against the Spigot API for Minecraft 26.2. Because the source uses Bukkit/Spigot API rather than Paper-only APIs, the same JAR is intended for:
+
+- Bukkit 26.2-compatible servers
+- Spigot 26.2
+- Paper 26.2
+
+Paper 26.2 exposes the Bukkit and Spigot API packages as part of its plugin API, while Spigot's API documentation is the compatibility baseline used by this project. The project does not compile against Paper-only classes.
 
 ## Configuration and safety
 
-MCOptimizer exposes several optimization systems through `config.yml`. Features that can change gameplay or have limited benefit on modern Paper are kept conservative or disabled by default rather than silently changing server behaviour.
+MCOptimizer exposes several optimization systems through `config.yml`. Features that can change gameplay or have limited benefit on modern server software are kept conservative or disabled by default rather than silently changing server behaviour.
 
 Always test configuration changes on a backup or staging server before using them on a production world.
 
