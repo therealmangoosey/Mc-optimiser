@@ -16,14 +16,12 @@ import com.mc.optimizer.memory.MemoryLeakDetector;
 import com.mc.optimizer.metrics.PerformanceMonitor;
 import com.mc.optimizer.network.NetworkOptimizer;
 import com.mc.optimizer.redstone.RedstoneOptimizer;
-import com.mc.optimizer.report.PerformanceReportManager;
 import com.mc.optimizer.stress.StressTestManager;
 import com.mc.optimizer.task.TaskOptimizer;
 import com.mc.optimizer.tnt.TNTOptimizer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.logging.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -45,7 +43,6 @@ public final class OptimizerPlugin extends JavaPlugin {
     private NetworkOptimizer networkOptimizer;
     private AfkManager afkManager;
     private StressTestManager stressTestManager;
-    private PerformanceReportManager reportManager;
     private PluginIntegrationAPI integrationAPI;
     private CrossPlatformManager crossPlatformManager;
     private LagPredictionManager lagPredictionManager;
@@ -108,8 +105,6 @@ public final class OptimizerPlugin extends JavaPlugin {
                 () -> afkManager = new AfkManager(this, configManager));
         initialize("stress-test", getConfig().getBoolean("stress-test.enabled", false),
                 () -> stressTestManager = new StressTestManager(this, configManager));
-        initialize("performance-reports", getConfig().getBoolean("performance-reports.enabled", false),
-                () -> reportManager = new PerformanceReportManager(this, configManager));
         initialize("integration-api", getConfig().getBoolean("integration-api.enabled", true),
                 () -> integrationAPI = new PluginIntegrationAPI(this, configManager));
         initialize("cross-platform", true, () -> crossPlatformManager = new CrossPlatformManager(this));
@@ -134,9 +129,7 @@ public final class OptimizerPlugin extends JavaPlugin {
         List<String> excluded = getConfig().getStringList("general.excluded-plugins");
         PluginManager manager = getServer().getPluginManager();
         for (String pluginName : pluginNames) {
-            if (!excluded.contains(pluginName) && manager.getPlugin(pluginName) != null) {
-                detectedConflicts.add(pluginName);
-            }
+            if (!excluded.contains(pluginName) && manager.getPlugin(pluginName) != null) detectedConflicts.add(pluginName);
         }
     }
 
@@ -173,7 +166,6 @@ public final class OptimizerPlugin extends JavaPlugin {
     private void shutdownComponents() {
         shutdown(lagPredictionManager, LagPredictionManager::shutdown); lagPredictionManager = null;
         shutdown(integrationAPI, PluginIntegrationAPI::shutdown); integrationAPI = null;
-        shutdown(reportManager, PerformanceReportManager::shutdown); reportManager = null;
         shutdown(stressTestManager, StressTestManager::shutdown); stressTestManager = null;
         shutdown(afkManager, AfkManager::shutdown); afkManager = null;
         shutdown(networkOptimizer, NetworkOptimizer::shutdown); networkOptimizer = null;
@@ -213,7 +205,6 @@ public final class OptimizerPlugin extends JavaPlugin {
     public NetworkOptimizer getNetworkOptimizer() { return networkOptimizer; }
     public AfkManager getAfkManager() { return afkManager; }
     public StressTestManager getStressTestManager() { return stressTestManager; }
-    public PerformanceReportManager getReportManager() { return reportManager; }
     public PluginIntegrationAPI getIntegrationAPI() { return integrationAPI; }
     public CrossPlatformManager getCrossPlatformManager() { return crossPlatformManager; }
     public LagPredictionManager getLagPredictionManager() { return lagPredictionManager; }
