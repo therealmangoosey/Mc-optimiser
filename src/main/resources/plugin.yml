@@ -1,0 +1,42 @@
+name: MCOptimizer
+version: '1.2.2'
+main: com.mc.optimizer.OptimizerPlugin
+api-version: '26.2'
+description: A versatile Minecraft server optimization plugin enhancing server performance through smart resource management for both Paper and Spigot servers
+authors: [juicyyfruittsnackss]
+website: https://dsc.gg/fruitsnacks
+load: STARTUP
+softdepend: [Geyser, Floodgate, ViaVersion, ProtocolSupport]
+
+commands:
+  mcoptimizer:
+    description: Main command for the MCOptimizer plugin
+    usage: /<command> [help|status|reload|config|version]
+    aliases: [mcopt, mco]
+    permission: mcoptimizer.use
+  
+permissions:
+  mcoptimizer.use:
+    description: Allows basic access to MCOptimizer commands
+    default: true
+  
+  mcoptimizer.reload:
+    description: Allows reloading the plugin configuration
+    default: op
+  
+  mcoptimizer.status:
+    description: Allows checking server optimization status
+    default: op
+  
+  mcoptimizer.config:
+    description: Allows analyzing and modifying server configuration files
+    default: op
+  
+  mcoptimizer.admin:
+    description: Grants all MCOptimizer permissions
+    default: op
+    children:
+      mcoptimizer.use: true
+      mcoptimizer.reload: true
+      mcoptimizer.status: true
+      mcoptimizer.config: true

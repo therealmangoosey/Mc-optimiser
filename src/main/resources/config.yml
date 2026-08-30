@@ -1,0 +1,485 @@
+# MCOptimizer Configuration
+# Version: 1.2.1
+
+# General Settings
+general:
+  # Enable debug logging
+  debug: false
+  # Set to true to show periodic performance reports in console
+  performance-reports: true
+  # How often (in seconds) to run the performance monitor
+  monitor-interval: 60
+  # Plugin prefix in messages (set to empty string to disable)
+  prefix: "&6[MCOptimizer] &r"
+  # Plugin metrics collection (anonymous usage statistics)
+  metrics: true
+
+# Chunk Management
+chunk:
+  # Enable smart chunk loading optimization
+  enabled: true
+  
+  # Maximum chunks to load per tick
+  max-chunks-per-tick: 10
+  
+  # Unload chunks when no players are nearby for this many seconds
+  unload-after-seconds: 30
+  
+  # Maximum view distance to override server settings (set to -1 to use server default)
+  max-view-distance: -1
+  
+  # Radius around spawn to keep chunks loaded (set to 0 to disable)
+  spawn-chunk-radius: 8
+  
+  # Prioritize chunks with the most player activity
+  prioritize-player-chunks: true
+  
+  # Prevent excessive chunk generation from rapid player movement
+  throttle-chunk-generation: true
+  
+  # Keep chunks marked as "essential" always loaded (set by other plugins)
+  respect-essential-chunks: true
+
+# Entity Management
+entity:
+  # Enable entity optimization
+  enabled: true
+  
+  # Maximum entities per chunk before optimization kicks in
+  max-entities-per-chunk: 25
+  
+  # Maximum item entities per chunk before cleanup
+  max-items-per-chunk: 20
+  
+  # How often (in ticks) to check for entity optimization (20 ticks = 1 second)
+  check-interval-ticks: 100
+  
+  # Merge nearby items of the same type
+  merge-items: true
+  
+  # Radius for item merging in blocks
+  item-merge-radius: 2.5
+  
+  # Limit mob AI for distant mobs
+  limit-distant-mob-ai: true
+  
+  # Distance threshold for AI limitation in blocks
+  distant-mob-threshold: 48
+  
+  # Despawn items faster when too many are in a single area
+  accelerated-item-despawn: true
+  
+  # Farm Protection
+  farm-protection:
+    # Enable protection for mob farms and villagers
+    enabled: true
+    
+    # Protect villagers from optimization effects
+    protect-villagers: true
+    
+    # Protect farm areas (where there are hoppers, droppers, etc.)
+    protect-farm-areas: true
+    
+    # Radius to detect farm structures
+    farm-detection-radius: 16
+    
+    # Mobs to never optimize in farms
+    protected-farm-mobs:
+      - VILLAGER
+      - IRON_GOLEM
+      - FARMER
+      - ZOMBIE_VILLAGER
+  
+  # Mob Culling Settings
+  mob-culling:
+    # Enable automatic mob culling to maintain performance
+    enabled: true
+    
+    # Maximum mobs per world before culling starts
+    max-mobs-per-world: 800
+    
+    # Max mobs of each type (per world)
+    max-per-type:
+      zombie: 70
+      skeleton: 70
+      creeper: 50
+      spider: 50
+      enderman: 30
+      slime: 20
+      phantom: 15
+      
+    # Protection radius around players (mobs within this radius won't be culled)
+    player-protection-radius: 64
+    
+    # Preserve named mobs (those with custom names)
+    preserve-named-mobs: true
+    
+    # Preserve tamed/pet mobs
+    preserve-tamed-mobs: true
+    
+    # Preserve mobs with custom equipment/armor
+    preserve-equipped-mobs: true
+    
+    # Don't cull boss mobs
+    preserve-boss-mobs: true
+
+# Redstone Optimization
+redstone:
+  # Enable redstone optimization
+  enabled: true
+  
+  # Limit the number of redstone updates per tick
+  max-updates-per-tick: 100
+  
+  # Disable redstone when no players are nearby
+  disable-when-no-players-nearby: true
+  
+  # Player distance to consider "nearby" for redstone activity (in blocks)
+  nearby-distance: 64
+  
+  # Prevent excessive piston movement
+  limit-piston-chain-length: 12
+  
+  # Smart hopper optimization (reduces hopper checks when empty/full)
+  smart-hoppers: true
+
+# Physics Optimization
+physics:
+  # Enable physics optimization
+  enabled: true
+  
+  # Limit the number of falling blocks processed per tick
+  max-falling-blocks-per-tick: 20
+  
+  # Optimize liquid flow updates
+  optimize-liquid-flow: true
+  
+  # Distance from players to process physics (blocks beyond this use simplified physics)
+  physics-range: 48
+  
+  # Allow physics simulations to be throttled during lag spikes
+  adaptive-throttling: true
+
+# Performance Monitor
+monitor:
+  # Enable performance monitoring
+  enabled: true
+  
+  # How many reports to keep in memory
+  history-size: 30
+  
+  # Track TPS (Ticks Per Second)
+  track-tps: true
+  
+  # Track memory usage
+  track-memory: true
+  
+  # Track entity counts
+  track-entities: true
+  
+  # Track chunk statistics
+  track-chunks: true
+  
+  # Track redstone activity
+  track-redstone: true
+  
+  # Alert admins when TPS drops below this threshold
+  tps-alert-threshold: 16.0
+  
+  # Alert notification methods (console, chat, actionbar)
+  alert-methods:
+    console: true
+    chat: true
+    actionbar: false
+
+# Anti-Lag Measures
+anti-lag:
+  # Enable automatic lag detection and mitigation
+  enabled: true
+  
+  # TPS threshold to trigger anti-lag measures
+  threshold-tps: 17.0
+  
+  # Actions to take when lag is detected
+  actions:
+    # Clear excessive items on ground
+    clear-items: true
+    
+    # Clear excessive mobs
+    clear-mobs: true
+    
+    # Disable mob spawning temporarily
+    disable-mob-spawning: true
+    
+    # Disable mob AI temporarily
+    disable-mob-ai: true
+    
+    # Suspend redstone temporarily
+    suspend-redstone: true
+    
+    # Suggest garbage collection
+    suggest-gc: true
+
+# Web Panel
+# Web panel functionality has been completely removed from this plugin
+
+# Plugin Compatibility
+compatibility:
+  # Automatically detect and avoid conflicts with other plugins
+  auto-detect-conflicts: true
+  
+  # List of plugins to skip optimizing (will ignore entities/chunks managed by these plugins)
+  excluded-plugins: []
+  
+  # Respect protection plugins (WorldGuard, GriefPrevention, etc.)
+  respect-protection-plugins: true
+  
+  # Use plugin hooks instead of direct modification where possible
+  use-plugin-hooks: true
+  
+  # Cross-platform support
+  cross-platform:
+    # Enable support for Geyser (Bedrock) players
+    geyser-support: true
+    
+    # Enable compatibility with Floodgate
+    floodgate-compatibility: true
+    
+    # Special optimizations for Bedrock clients
+    bedrock-optimizations: true
+
+# Configuration File Analyzer
+# This feature analyzes and optimizes your server configuration files
+config-analyzer:
+  # Enable the configuration analyzer feature
+  enabled: true
+  
+  # Select which configuration files to analyze and optimize
+  analyze-server-properties: true
+  analyze-bukkit-yml: true
+  analyze-spigot-yml: true
+  analyze-paper-yml: true
+
+# Memory Leak Detection
+memory-leak:
+  # Enable memory leak detection
+  enabled: true
+  
+  # How often to check for memory leaks in minutes
+  check-interval: 15
+  
+  # How many consecutive checks must show a leak before alerting
+  detection-threshold: 3
+  
+  # Minimum memory increase to consider as a leak (in MB)
+  min-leak-threshold-mb: 50
+  
+  # Enable heap dump on leak detection (requires more disk space)
+  create-heap-dump: false
+  
+  # Show potential source of memory leak (class/plugin name)
+  show-leak-sources: true
+
+# Entity Distance Limiting
+entity-distance-limit:
+  # Enable entity AI complexity reduction based on distance
+  enabled: true
+  
+  # Base radius (blocks) where entities have full AI
+  full-ai-radius: 32
+  
+  # Radius (blocks) where entities have reduced AI
+  reduced-ai-radius: 64
+  
+  # Radius (blocks) where entities have minimal AI
+  minimal-ai-radius: 96
+  
+  # Entities beyond this radius will have almost no AI (except basic physics)
+  no-ai-radius: 128
+  
+  # Entity types exempt from distance limiting
+  exempt-types:
+    - ENDER_DRAGON
+    - WITHER
+    - VILLAGER
+    
+  # If true, entities with custom names will be exempt
+  exempt-named-entities: true
+
+# TNT Optimization
+tnt-optimization:
+  # Enable smart TNT optimization
+  enabled: true
+  
+  # Maximum TNT entities processed per tick
+  max-tnt-per-tick: 10
+  
+  # Batch physics updates during explosions
+  batch-physics-updates: true
+  
+  # Maximum explosion calculations per tick
+  max-explosions-per-tick: 5
+  
+  # Reduce explosion effects when too many explosions happen at once
+  dynamic-explosion-scaling: true
+  
+  # Optimize particle effects for explosions
+  optimize-particles: true
+
+# Scheduled Task Optimization
+task-optimization:
+  # Enable scheduled task monitoring and optimization
+  enabled: true
+  
+  # Monitor tasks from other plugins
+  monitor-other-plugins: true
+  
+  # Warn about inefficient task scheduling (tasks running too frequently)
+  warn-inefficient-tasks: true
+  
+  # Minimum milliseconds a task should take to be considered worth tracking
+  min-task-time-ms: 5
+  
+  # Maximum tasks to show in reports
+  max-tasks-in-report: 20
+
+# Network Traffic Optimization
+network:
+  # Enable network traffic optimization
+  enabled: true
+  
+  # Use packet batching for entity updates
+  batch-entity-packets: true
+  
+  # Prioritize packets based on player focus
+  prioritize-player-focus: true
+  
+  # Reduce packet frequency for distant entities
+  reduce-distant-packets: true
+  
+  # Compression level for packets (1-9, higher = more CPU usage but less bandwidth)
+  compression-level: 5
+  
+  # Entity visibility range as percentage of view distance
+  visibility-percent: 85
+
+# AFK Player Detection
+afk-detection:
+  # Enable AFK player detection and optimization
+  enabled: true
+  
+  # Time in seconds before considering a player AFK
+  afk-timeout-seconds: 300
+  
+  # Reduce chunk loading radius for AFK players
+  reduce-view-distance: true
+  
+  # View distance for AFK players (blocks)
+  afk-view-distance: 4
+  
+  # Notify players when they are marked as AFK
+  notify-players: true
+  
+  # Auto-mark players as AFK even if they're moving mouse but not position
+  detect-no-position-change: true
+
+# Performance Stress Testing
+stress-test:
+  # Enable stress testing capabilities
+  enabled: false
+  
+  # Require op permission to run stress tests
+  require-op: true
+  
+  # Maximum entities to spawn during tests
+  max-test-entities: 500
+  
+  # Maximum blocks to modify during tests
+  max-test-blocks: 1000
+  
+  # Allow stress testing in production environments
+  allow-in-production: false
+  
+  # Auto-cleanup after stress tests
+  auto-cleanup: true
+
+# Performance Reports
+performance-reports:
+  # Enable detailed performance reports
+  enabled: true
+  
+  # Generate periodic reports automatically
+  auto-generate: true
+  
+  # Report generation interval in minutes
+  report-interval: 60
+  
+  # Keep report history (days)
+  history-days: 7
+  
+  # Include plugin-specific metrics
+  include-plugin-metrics: true
+  
+  # Export reports to web (disabled - web panel functionality removed)
+  export-to-web: false
+  
+  # Maximum reports to keep
+  max-reports: 30
+
+# Lag Prediction
+lag-prediction:
+  # Enable the lag prediction system
+  enabled: true
+  
+  # How often (in seconds) to collect performance data
+  interval: 30
+  
+  # How many data points to keep for prediction analysis
+  data-points: 60
+  
+  # TPS threshold to trigger prediction (below this will start predicting)
+  tps-threshold: 18.0
+  
+  # CPU load threshold (0-1) - above this will trigger prediction
+  cpu-threshold: 0.8
+  
+  # Memory threshold in MB (free memory below this will trigger alerts)
+  memory-threshold: 2048
+  
+  # Notify admins when lag is predicted
+  notify-admins: true
+  
+  # Automatically tune server settings based on predictions
+  auto-tune: false
+  
+  # Web interface for monitoring server status
+  web-interface:
+    # Enable the web interface
+    enabled: true
+    
+    # Port to run the web interface on (must be open in firewall)
+    port: 8080
+    
+    # Bind address (use 0.0.0.0 for all interfaces, or 127.0.0.1 for localhost only)
+    bind-address: "0.0.0.0"
+    
+    # Access token (empty string = no authentication required)
+    # Set this to a secure random string to protect access to your server stats
+    access-token: ""
+
+# Plugin Integration API
+integration-api:
+  # Enable the plugin integration API
+  enabled: true
+  
+  # Log when plugins register with the API
+  log-registrations: true
+  
+  # Allow plugins to register custom optimizers
+  allow-custom-optimizers: true
+  
+  # Allow plugins to access performance metrics
+  allow-metrics-access: true
+  
+  # Default access level for plugins (0=none, 1=read, 2=read/write)
+  default-access-level: 1
