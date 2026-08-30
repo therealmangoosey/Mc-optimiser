@@ -34,17 +34,13 @@ jobs:
           ./gradlew --version
           CONFIG_VERSION=$(sed -n 's/^# Version: \([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\)$/\1/p' src/main/resources/config.yml | head -n 1)
           test -n "$CONFIG_VERSION"
-          echo "Version from config.yml: $CONFIG_VERSION"
-          echo "VERSION=$CONFIG_VERSION" >> "$GITHUB_ENV"
-
-      - name: Validate version metadata
-        shell: bash
-        run: |
-          set -euo pipefail
-          grep -Eq "^version = \"${VERSION//./\\.}\"$" <(sed -n '/^group = /,/^repositories /p' build.gradle.kts) || {
-            echo "Gradle project version does not match config.yml"
+          PROJECT_VERSION=$(./gradlew -q properties | sed -n 's/^version: //p' | head -n 1)
+          test "$PROJECT_VERSION" = "$CONFIG_VERSION" || {
+            echo "Gradle project version ($PROJECT_VERSION) does not match config.yml ($CONFIG_VERSION)"
             exit 1
           }
+          echo "Version: $CONFIG_VERSION"
+          echo "VERSION=$CONFIG_VERSION" >> "$GITHUB_ENV"
 
       - name: Build JAR
         run: ./gradlew --no-daemon clean build --stacktrace
