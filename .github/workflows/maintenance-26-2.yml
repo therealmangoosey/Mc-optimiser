@@ -1,4 +1,4 @@
-name: One-time Paper 26.2 hardening
+name: One-time Paper 26.2 compatibility repair
 
 on:
   push:
@@ -8,8 +8,7 @@ permissions:
   contents: write
 
 jobs:
-  harden:
-    if: github.actor != 'github-actions[bot]'
+  repair:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -22,258 +21,130 @@ jobs:
           java-version: '25'
           cache: gradle
 
-      - name: Apply 26.2 compatibility fixes
-        shell: python
+      - name: Patch compatibility issues
+        shell: bash
         run: |
-          from pathlib import Path
-          import re
+          set -euo pipefail
 
-          def edit(path, fn):
-              p = Path(path)
-              text = p.read_text(encoding='utf-8')
-              new = fn(text)
-              if new != text:
-                  p.write_text(new, encoding='utf-8')
-                  print('updated', path)
+          python3 - <<'PY'
+          from pathlib import Path
 
           def replace(path, old, new):
-              def f(text):
-                  return text.replace(old, new)
-              edit(path, f)
+              p = Path(path)
+              s = p.read_text(encoding='utf-8')
+              if old in s:
+                  s = s.replace(old, new)
+                  p.write_text(s, encoding='utf-8')
+                  print('updated', path)
 
-          # EntityDistanceLimiter: preserve original awareness and compile against 26.2.
           replace('src/main/java/com/mc/optimizer/entity/distance/EntityDistanceLimiter.java',
                   'import org.bukkit.entity.LivingEntity;\n',
                   'import org.bukkit.entity.LivingEntity;\nimport org.bukkit.entity.Mob;\n')
           replace('src/main/java/com/mc/optimizer/entity/distance/EntityDistanceLimiter.java',
-                  '            entity.setAI(true);\n            entity.setCollidable(true);',
-                  '            entity.setAI(state.isSavedAware());\n            entity.setCollidable(true);')
+                  'entity.setAI(true);\n        entity.setCollidable(true);',
+                  'entity.setAI(state.isSavedAware());\n        entity.setCollidable(true);')
 
-          # Mob culling: read the configured canonical section.
+          replace('src/main/java/com/mc/optimizer/entity/culling/MobCullingManager.java',
+                  'getInt("entities.culling.max-per-type." + key, 50)',
+                  'getInt("mob-culling.max-per-type." + key, 50)')
           replace('src/main/java/com/mc/optimizer/entity/culling/MobCullingManager.java',
                   'Collections.newSetFromMap(new ConcurrentHashMap());',
                   'Collections.newSetFromMap(new ConcurrentHashMap<UUID, Boolean>());')
-          replace('src/main/java/com/mc/optimizer/entity/culling/MobCullingManager.java',
-                  'this.plugin.getConfig().getInt("entities.culling.max-per-type." + key, 50)',
-                  'this.plugin.getConfig().getInt("mob-culling.max-per-type." + key, 50)')
 
-          # Chunk management: spawn chunks are no longer a vanilla concept in Paper 26.2.
-          def chunk_fix(text):
-              text = re.sub(r'\n            if \(this\.spawnChunkRadius <= 0\) continue;\n            this\.ensureSpawnChunksLoaded\(world\);', '', text)
-              text = text.replace('if (this.isSpawnChunk(chunk) || (lastAccessed = this.lastAccessedChunks.get(key)) == null ||', 'if ((lastAccessed = this.lastAccessedChunks.get(key)) == null ||')
-              text = text.replace('world.getName() + ":" + chunkX + ":" + chunkZ', 'world.getKey().toString() + ":" + chunkX + ":" + chunkZ')
-              text = text.replace('chunk.getWorld().getName() + ":" + chunk.getX() + ":" + chunk.getZ()', 'chunk.getWorld().getKey().toString() + ":" + chunk.getX() + ":" + chunk.getZ()')
-              text = re.sub(r'@EventHandler\(priority=EventPriority\.MONITOR\)\n    public void onChunkUnload\(ChunkUnloadEvent event\) \{.*?\n    \}\n\n    @EventHandler', '''@EventHandler(priority=EventPriority.MONITOR)
-    public void onChunkUnload(ChunkUnloadEvent event) {
-        if (this.config.isDebugEnabled()) {
-            this.logger.fine("Chunk unloaded: " + this.getChunkKey(event.getChunk()));
-        }
-    }
+          p = Path('src/main/java/com/mc/optimizer/entity/OptimizerPlugin.java')
+          if p.exists():
+              replace(str(p), '"chunks.enabled"', '"chunk.enabled"')
 
-    @EventHandler''', text, flags=re.S)
-              text = text.replace('this.plugin.getConfig().getBoolean("chunks.enabled", true)', 'this.plugin.getConfig().getBoolean("chunk.enabled", true)')
-              return text
-          edit('src/main/java/com/mc/optimizer/chunk/ChunkManager.java', chunk_fix)
-
-          # AFK manager: use canonical configuration and server-side view distance.
-          def afk_fix(text):
-              for old, new in {
-                  '"afk.enabled"':'"afk-detection.enabled"',
-                  '"afk.timeout-seconds"':'"afk-detection.timeout-seconds"',
-                  '"afk.reduce-view-distance"':'"afk-detection.reduce-view-distance"',
-                  '"afk.afk-view-distance"':'"afk-detection.afk-view-distance"',
-                  '"afk.notify-players"':'"afk-detection.notify-players"',
-                  '"afk.detect-no-position-change"':'"afk-detection.detect-no-position-change"',
-              }.items():
-                  text=text.replace(old,new)
-              text=text.replace('data.setOriginalViewDistance(player.getClientViewDistance());', 'data.setOriginalViewDistance(player.getViewDistance());')
-              text=text.replace('''            if (this.reduceViewDistance) {
+          # Align AFK manager with config.yml and actually change/restore server view distance.
+          p = Path('src/main/java/com/mc/optimizer/afk/AfkManager.java')
+          s = p.read_text(encoding='utf-8')
+          for a,b in {
+              '"afk.enabled"':'"afk-detection.enabled"',
+              '"afk.timeout-seconds"':'"afk-detection.timeout-seconds"',
+              '"afk.reduce-view-distance"':'"afk-detection.reduce-view-distance"',
+              '"afk.afk-view-distance"':'"afk-detection.afk-view-distance"',
+              '"afk.notify-players"':'"afk-detection.notify-players"',
+              '"afk.detect-no-position-change"':'"afk-detection.detect-no-position-change"',
+              'player.getClientViewDistance()':'player.getViewDistance()',
+          }.items():
+              s=s.replace(a,b)
+          s=s.replace('''            if (this.reduceViewDistance) {
                 // empty if block
-            }''', '''            if (this.reduceViewDistance) {
+            }''','''            if (this.reduceViewDistance) {
                 player.setViewDistance(Math.max(2, Math.min(32, this.afkViewDistance)));
             }''')
-              text=text.replace('''            int originalViewDistance;
+          s=s.replace('''            int originalViewDistance;
             if (!this.reduceViewDistance || (originalViewDistance = data.getOriginalViewDistance()) > 0) {
                 // empty if block
-            }''', '''            if (this.reduceViewDistance) {
+            }''','''            if (this.reduceViewDistance) {
                 int originalViewDistance = data.getOriginalViewDistance();
                 if (originalViewDistance > 0) {
                     player.setViewDistance(originalViewDistance);
                 }
             }''')
-              text=re.sub(r'        int originalViewDistance;\n        UUID playerId = player.getUniqueId\(\);\n        AfkPlayerData data = this.playerData.get\(playerId\);\n        if \(data == null \|\| !data.isAfk\(\) \|\| !this.reduceViewDistance \|\| \(originalViewDistance = data.getOriginalViewDistance\(\)\) > 0\) \{\n            // empty if block\n        \}\n        this.playerData.remove\(playerId\);', '''        UUID playerId = player.getUniqueId();
-        AfkPlayerData data = this.playerData.get(playerId);
-        if (data != null && data.isAfk() && this.reduceViewDistance) {
-            int originalViewDistance = data.getOriginalViewDistance();
-            if (originalViewDistance > 0) {
-                player.setViewDistance(originalViewDistance);
-            }
-        }
-        this.playerData.remove(playerId);''', text)
-              text=re.sub(r'        if \(this.reduceViewDistance\) \{\n            for \(Map.Entry<UUID, AfkPlayerData> entry : this.playerData.entrySet\(\)\) \{\n                int originalViewDistance;\n                Player player;\n                if \(entry.getValue\(\).isAfk\(\) && \(player = Bukkit.getPlayer\(\(UUID\)entry.getKey\(\)\)\) != null && player.isOnline\(\) && \(originalViewDistance = entry.getValue\(\)\.getOriginalViewDistance\(\)\) <= 0\) continue;\n            \}\n        \}', '''        if (this.reduceViewDistance) {
-            for (Map.Entry<UUID, AfkPlayerData> entry : this.playerData.entrySet()) {
-                Player player = Bukkit.getPlayer(entry.getKey());
-                int originalViewDistance = entry.getValue().getOriginalViewDistance();
-                if (entry.getValue().isAfk() && player != null && player.isOnline() && originalViewDistance > 0) {
-                    player.setViewDistance(originalViewDistance);
-                }
-            }
-        }''', text)
-              return text
-          edit('src/main/java/com/mc/optimizer/afk/AfkManager.java', afk_fix)
+          p.write_text(s,encoding='utf-8')
 
-          # Cross-platform: configuration must actually control the feature.
-          def cross_fix(text):
-              text=text.replace('''        this.geyserSupport = true;
+          # Cross-platform toggles: actually honor configuration.
+          p=Path('src/main/java/com/mc/optimizer/integration/CrossPlatformManager.java')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace('''        this.geyserSupport = true;
         this.floodgateCompatibility = true;
         this.bedrockOptimizations = true;
         this.plugin.getConfig().getBoolean("compatibility.cross-platform.geyser-support", true);
         this.plugin.getConfig().getBoolean("compatibility.cross-platform.floodgate-compatibility", true);
-        this.plugin.getConfig().getBoolean("compatibility.cross-platform.bedrock-optimizations", true);''', '''        this.geyserSupport = this.plugin.getConfig().getBoolean("compatibility.cross-platform.geyser-support", true);
+        this.plugin.getConfig().getBoolean("compatibility.cross-platform.bedrock-optimizations", true);''','''        this.geyserSupport = this.plugin.getConfig().getBoolean("compatibility.cross-platform.geyser-support", true);
         this.floodgateCompatibility = this.plugin.getConfig().getBoolean("compatibility.cross-platform.floodgate-compatibility", true);
         this.bedrockOptimizations = this.plugin.getConfig().getBoolean("compatibility.cross-platform.bedrock-optimizations", true);''')
-              text=text.replace('if (this.isBedrockPlayer(player)) {', 'if (this.bedrockOptimizations && (this.geyserLoaded || this.floodgateLoaded) && this.isBedrockPlayer(player)) {')
-              text=re.sub(r'            try \{\n                Object clientViewDistance = player.getClass\(\)\.getMethod\("getViewDistance", new Class\[0\]\)\.invoke\(\(Object\)player, new Object\[0\]\);.*?            catch \(Exception clientViewDistance\) \{\n                // empty catch block\n            \}', '''            int viewDistance = player.getViewDistance();
+          s=s.replace('''            try {
+                Object clientViewDistance = player.getClass().getMethod("getViewDistance", new Class[0]).invoke((Object)player, new Object[0]);
+                if (clientViewDistance instanceof Integer && (Integer)clientViewDistance > 8) {
+                    player.getClass().getMethod("setViewDistance", Integer.TYPE).invoke((Object)player, 8);
+                    this.logger.fine("Reduced view distance for Bedrock player " + player.getName());
+                }
+            }
+            catch (Exception clientViewDistance) {
+                // empty catch block
+            }''','''            int viewDistance = player.getViewDistance();
             if (viewDistance > 8) {
                 player.setViewDistance(8);
                 this.logger.fine("Reduced view distance for Bedrock player " + player.getName());
-            }''', text, flags=re.S)
-              return text
-          edit('src/main/java/com/mc/optimizer/integration/CrossPlatformManager.java', cross_fix)
+            }''')
+          p.write_text(s,encoding='utf-8')
 
-          # Network: implement actual per-player entity tracking culling using Paper's cancellable event.
-          def network_fix(text):
-              if 'PlayerTrackEntityEvent' not in text:
-                  text=text.replace('import com.mc.optimizer.config.ConfigManager;\n', 'import com.mc.optimizer.config.ConfigManager;\nimport io.papermc.paper.event.player.PlayerTrackEntityEvent;\nimport io.papermc.paper.event.player.PlayerUntrackEntityEvent;\n')
-              text=text.replace('        this.startUpdateTask();\n        this.startPlayerMonitorTask();', '        this.startPlayerMonitorTask();')
-              if 'onPlayerTrackEntity(PlayerTrackEntityEvent event)' not in text:
-                  marker='    @EventHandler(priority=EventPriority.MONITOR, ignoreCancelled=true)\n    public void onPlayerJoin'
-                  handlers='''    @EventHandler(priority=EventPriority.NORMAL, ignoreCancelled=true)
-    public void onPlayerTrackEntity(PlayerTrackEntityEvent event) {
-        if (!this.enabled) return;
-        Player player = event.getPlayer();
-        Entity entity = event.getEntity();
-        PlayerPacketInfo info = this.playerInfo.computeIfAbsent(player.getUniqueId(), PlayerPacketInfo::new);
-        if (entity instanceof Player) {
-            info.getVisibleEntities().add(entity.getUniqueId());
-            return;
-        }
-        if (!this.shouldTrackEntity(player, info, entity)) {
-            event.setCancelled(true);
-            return;
-        }
-        info.getVisibleEntities().add(entity.getUniqueId());
-    }
+          # Memory monitor: use canonical configuration names and thread-safe state.
+          p=Path('src/main/java/com/mc/optimizer/memory/MemoryLeakDetector.java')
+          s=p.read_text(encoding='utf-8')
+          if 'import java.util.Collections;' not in s: s=s.replace('import java.util.ArrayList;','import java.util.ArrayList;\nimport java.util.Collections;')
+          if 'import java.util.concurrent.ConcurrentHashMap;' not in s: s=s.replace('import java.util.logging.Logger;','import java.util.concurrent.ConcurrentHashMap;\nimport java.util.logging.Logger;')
+          s=s.replace('private final List<MemorySnapshot> memoryHistory = new ArrayList<>();','private final List<MemorySnapshot> memoryHistory = Collections.synchronizedList(new ArrayList<>());')
+          s=s.replace('private final Map<String, Long> pluginMemoryUsage = new HashMap<>();','private final Map<String, Long> pluginMemoryUsage = new ConcurrentHashMap<>();')
+          for key in ['check-interval','detection-threshold','min-leak-threshold-mb','create-heap-dump','show-leak-sources']:
+              s=s.replace(f'"memory-leak.{key}"',f'"memory-leak-detection.{key}"')
+          s=s.replace('System.gc();','// Do not force a global GC pause from the monitoring thread.')
+          p.write_text(s,encoding='utf-8')
 
-    @EventHandler(priority=EventPriority.MONITOR, ignoreCancelled=true)
-    public void onPlayerUntrackEntity(PlayerUntrackEntityEvent event) {
-        PlayerPacketInfo info = this.playerInfo.get(event.getPlayer().getUniqueId());
-        if (info != null) info.getVisibleEntities().remove(event.getEntity().getUniqueId());
-    }
+          # These implementations are currently monitoring-only or too invasive; keep safe defaults.
+          p=Path('src/main/resources/config.yml')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace('tnt-optimization:\n  enabled: true','tnt-optimization:\n  enabled: false')
+          s=s.replace('task-optimization:\n  enabled: true','task-optimization:\n  enabled: false')
+          s=s.replace('  smart-hoppers: true','  smart-hoppers: false')
+          s=s.replace('  pre-generate-spawn: true','  pre-generate-spawn: false')
+          p.write_text(s,encoding='utf-8')
+          PY
 
-    private boolean shouldTrackEntity(Player player, PlayerPacketInfo info, Entity entity) {
-        double distance = entity.getLocation().distance(player.getLocation());
-        if (distance <= 16.0) return true;
-        if (this.reduceDistantPackets) {
-            int viewDistance = Math.max(2, player.getViewDistance());
-            double maxDistance = viewDistance * 16.0 * (Math.max(1, Math.min(100, this.visibilityPercent)) / 100.0);
-            if (distance > maxDistance) return false;
-        }
-        if (this.prioritizePlayerFocus) {
-            Vector direction = info.getFocusDirection();
-            Vector toEntity = entity.getLocation().toVector().subtract(player.getLocation().toVector());
-            if (toEntity.lengthSquared() > 0.0 && direction.dot(toEntity.normalize()) < -0.5) return false;
-        }
-        return true;
-    }
-
-'''
-                  text=text.replace(marker,handlers+marker)
-              return text
-          edit('src/main/java/com/mc/optimizer/network/NetworkOptimizer.java', network_fix)
-
-          # Redstone: ensure the tick counter resets and cancel its task on shutdown; disable whole-chunk hopper scans.
-          def redstone_fix(text):
-              if 'private BukkitTask tickResetTask;' not in text:
-                  text=text.replace('private BukkitTask hopperCheckTask;', 'private BukkitTask hopperCheckTask;\n    private BukkitTask tickResetTask;')
-              text=text.replace('Bukkit.getScheduler().runTaskTimer((Plugin)plugin, this::resetTickCounter, 1L, 1L);', 'this.tickResetTask = Bukkit.getScheduler().runTaskTimer((Plugin)plugin, this::resetTickCounter, 1L, 1L);')
-              if 'cleanupTrackingAndResetTickCounter' not in text:
-                  text=text.replace('    private boolean arePlayersNearby(Location location) {', '    private void cleanupTrackingAndResetTickCounter() {\n        this.cleanupTracking();\n        this.resetTickCounter();\n    }\n\n    private boolean arePlayersNearby(Location location) {')
-              text=re.sub(r'        for \(World world : Bukkit\.getWorlds\(\)\) \{\n            for \(Chunk chunk : world\.getLoadedChunks\(\)\) \{\n                this\.optimizeHoppersInChunk\(chunk\);\n            \}\n        \}', '        // Avoid scanning every block of every loaded chunk on the main thread.\n', text)
-              text=text.replace('''        if (this.hopperCheckTask != null) {
-            this.hopperCheckTask.cancel();
-        }''', '''        if (this.hopperCheckTask != null) {
-            this.hopperCheckTask.cancel();
-            this.hopperCheckTask = null;
-        }
-        if (this.tickResetTask != null) {
-            this.tickResetTask.cancel();
-            this.tickResetTask = null;
-        }''')
-              text=text.replace('if (activityLevel > 10) {\n                power = 3.0f;\n            } else if (activityLevel > 20)', 'if (activityLevel > 20) {\n                power = 2.0f;\n            } else if (activityLevel > 10)')
-              return text
-          edit('src/main/java/com/mc/optimizer/redstone/RedstoneOptimizer.java', redstone_fix)
-
-          # TNT: fix unreachable threshold ordering.
-          def tnt_fix(text):
-              text=text.replace('''if (activityLevel > 10) {
-                power = 3.0f;
-            } else if (activityLevel > 20) {
-                power = 2.0f;''', '''if (activityLevel > 30) {
-                power = 1.0f;
-            } else if (activityLevel > 20) {
-                power = 2.0f;
-            } else if (activityLevel > 10) {
-                power = 3.0f;''')
-              text=text.replace('''if (activityLevel > 10) {
-            reductionFactor = 0.75f;
-        } else if (activityLevel > 20) {
-            reductionFactor = 0.5f;
-        } else if (activityLevel > 30) {
-            reductionFactor = 0.25f;''', '''if (activityLevel > 30) {
-            reductionFactor = 0.25f;
-        } else if (activityLevel > 20) {
-            reductionFactor = 0.5f;
-        } else if (activityLevel > 10) {
-            reductionFactor = 0.75f;''')
-              return text
-          edit('src/main/java/com/mc/optimizer/tnt/TNTOptimizer.java', tnt_fix)
-
-          # Memory detector: thread-safe state and canonical config keys.
-          def memory_fix(text):
-              if 'Collections.synchronizedList' not in text:
-                  text=text.replace('import java.util.ArrayList;', 'import java.util.ArrayList;\nimport java.util.Collections;')
-              text=text.replace('private final List<MemorySnapshot> memoryHistory = new ArrayList<>();', 'private final List<MemorySnapshot> memoryHistory = Collections.synchronizedList(new ArrayList<>());')
-              text=text.replace('private final Map<String, Long> pluginMemoryUsage = new HashMap<>();', 'private final Map<String, Long> pluginMemoryUsage = new ConcurrentHashMap<>();')
-              if 'ConcurrentHashMap' in text and 'import java.util.concurrent.ConcurrentHashMap;' not in text:
-                  text=text.replace('import java.util.logging.Logger;', 'import java.util.concurrent.ConcurrentHashMap;\nimport java.util.logging.Logger;')
-              for key in ['check-interval','detection-threshold','min-leak-threshold-mb','create-heap-dump','show-leak-sources']:
-                  text=text.replace(f'"memory-leak.{key}"', f'"memory-leak-detection.{key}"')
-              text=text.replace('            System.gc();', '            // Do not force a global GC from the monitoring task.')
-              text=text.replace('        System.gc();', '        // Preventive monitoring should not force a global GC pause.')
-              return text
-          edit('src/main/java/com/mc/optimizer/memory/MemoryLeakDetector.java', memory_fix)
-
-          # Stress tests are disabled by default; keep original block map type-safe.
-          replace('src/main/java/com/mc/optimizer/stress/StressTestManager.java', 'final HashMap originalBlocks = new HashMap();', 'final Map<Location, Material> originalBlocks = new HashMap<>();')
-          replace('src/main/java/com/mc/optimizer/stress/StressTestManager.java', 'return this.allowInProduction || Bukkit.getServer().getWorldType().equals("FLAT");', 'return this.allowInProduction;')
-
-          # Safe defaults for modules that currently cannot safely alter the server internals they claim to optimize.
-          replace('src/main/resources/config.yml', 'tnt-optimization:\n  enabled: true', 'tnt-optimization:\n  enabled: false')
-          replace('src/main/resources/config.yml', 'task-optimization:\n  enabled: true', 'task-optimization:\n  enabled: false')
-          replace('src/main/resources/config.yml', '  smart-hoppers: true', '  smart-hoppers: false')
-          replace('src/main/resources/config.yml', '  pre-generate-spawn: true', '  pre-generate-spawn: false')
-
-      - name: Build hardened plugin
+      - name: Verify and build
         run: |
           chmod +x ./gradlew
           ./gradlew --no-daemon clean build --stacktrace
 
-      - name: Commit only after successful build
+      - name: Commit verified fixes and remove repair workflow
+        shell: bash
         run: |
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git rm .github/workflows/maintenance-26-2.yml
           git add src/main/java src/main/resources/config.yml
+          git rm .github/workflows/maintenance-26-2.yml
           git commit -m "Harden MCOptimizer for Paper 26.2 [skip-release]"
           git push
