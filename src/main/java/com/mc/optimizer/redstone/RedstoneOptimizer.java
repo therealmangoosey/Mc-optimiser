@@ -75,7 +75,8 @@ implements Listener {
         this.loadConfiguration();
         if (this.enabled) {
             plugin.getServer().getPluginManager().registerEvents((Listener)this, (Plugin)plugin);
-            this.cleanupTask = Bukkit.getScheduler().runTaskTimer((Plugin)plugin, this::cleanupTracking, 1200L, 1200L);
+            this.cleanupTask = Bukkit.getScheduler().runTaskTimer((Plugin)plugin, this::cleanupTrackingAndResetTickCounter, 1200L, 1200L);
+            Bukkit.getScheduler().runTaskTimer((Plugin)plugin, this::resetTickCounter, 1L, 1L);
             if (this.smartHoppers) {
                 this.hopperCheckTask = Bukkit.getScheduler().runTaskTimer((Plugin)plugin, this::optimizeHoppers, 200L, 600L);
             }
@@ -132,7 +133,7 @@ implements Listener {
         if (!this.enabled) {
             return;
         }
-        if (this.updatesThisTick > 1000) {
+        if (this.updatesThisTick < 0) {
             this.updatesThisTick = 0;
         }
         Block block = event.getBlock();
@@ -161,15 +162,13 @@ implements Listener {
         if (!this.enabled || this.limitPistonChainLength <= 0) {
             return;
         }
-        Block piston = event.getBlock();
-        Location pistonLoc = piston.getLocation();
-        int chainLength = this.pistonChains.getOrDefault(pistonLoc, 0) + 1;
-        this.pistonChains.put(pistonLoc, chainLength);
-        if (chainLength > this.limitPistonChainLength) {
+        if (event.getBlocks().size() > this.limitPistonChainLength) {
+            Block piston = event.getBlock();
+            Location pistonLoc = piston.getLocation();
             event.setCancelled(true);
             ++this.cancelledPistons;
             if (this.config.isDebugEnabled()) {
-                this.logger.fine("Cancelled piston extension at " + pistonLoc.getBlockX() + "," + pistonLoc.getBlockY() + "," + pistonLoc.getBlockZ() + " (chain length: " + chainLength + ")");
+                this.logger.fine("Cancelled piston extension at " + pistonLoc.getBlockX() + "," + pistonLoc.getBlockY() + "," + pistonLoc.getBlockZ() + " (moved blocks: " + event.getBlocks().size() + ")");
             }
         }
     }
@@ -179,11 +178,9 @@ implements Listener {
         if (!this.enabled || this.limitPistonChainLength <= 0) {
             return;
         }
-        Block piston = event.getBlock();
-        Location pistonLoc = piston.getLocation();
-        int chainLength = this.pistonChains.getOrDefault(pistonLoc, 0) + 1;
-        this.pistonChains.put(pistonLoc, chainLength);
-        if (chainLength > this.limitPistonChainLength) {
+        if (event.getBlocks().size() > this.limitPistonChainLength) {
+            Block piston = event.getBlock();
+            Location pistonLoc = piston.getLocation();
             event.setCancelled(true);
             ++this.cancelledPistons;
         }

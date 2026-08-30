@@ -158,7 +158,7 @@ TabCompleter {
             loadedChunks += world.getLoadedChunks().length;
         }
         sender.sendMessage(String.valueOf(ChatColor.YELLOW) + "Loaded Chunks: " + String.valueOf(ChatColor.WHITE) + loadedChunks);
-        if (this.plugin.getConfig().getBoolean("entity.mob-culling.enabled", true)) {
+        if (this.plugin.getConfig().getBoolean("mob-culling.enabled", true)) {
             Map<String, Object> cullingStats = this.plugin.getMobCullingManager().getStats();
             int totalCulled = (Integer)cullingStats.getOrDefault("totalMobsCulled", 0);
             sender.sendMessage(String.valueOf(ChatColor.YELLOW) + "Mobs Culled: " + String.valueOf(ChatColor.WHITE) + totalCulled);
@@ -166,7 +166,7 @@ TabCompleter {
         sender.sendMessage(String.valueOf(ChatColor.YELLOW) + "Active Features:");
         sender.sendMessage(String.valueOf(ChatColor.GRAY) + " - Chunk Optimization: " + (this.plugin.getConfig().getBoolean("chunk.enabled", true) ? String.valueOf(ChatColor.GREEN) + "Enabled" : String.valueOf(ChatColor.RED) + "Disabled"));
         sender.sendMessage(String.valueOf(ChatColor.GRAY) + " - Entity Optimization: " + (this.plugin.getConfig().getBoolean("entity.enabled", true) ? String.valueOf(ChatColor.GREEN) + "Enabled" : String.valueOf(ChatColor.RED) + "Disabled"));
-        sender.sendMessage(String.valueOf(ChatColor.GRAY) + " - Mob Culling: " + (this.plugin.getConfig().getBoolean("entity.mob-culling.enabled", true) ? String.valueOf(ChatColor.GREEN) + "Enabled" : String.valueOf(ChatColor.RED) + "Disabled"));
+        sender.sendMessage(String.valueOf(ChatColor.GRAY) + " - Mob Culling: " + (this.plugin.getConfig().getBoolean("mob-culling.enabled", true) ? String.valueOf(ChatColor.GREEN) + "Enabled" : String.valueOf(ChatColor.RED) + "Disabled"));
         sender.sendMessage(String.valueOf(ChatColor.GRAY) + " - Redstone Optimization: " + (this.plugin.getConfig().getBoolean("redstone.enabled", true) ? String.valueOf(ChatColor.GREEN) + "Enabled" : String.valueOf(ChatColor.RED) + "Disabled"));
         sender.sendMessage(String.valueOf(ChatColor.GRAY) + " - Lag Prediction: " + (this.plugin.getConfig().getBoolean("lag-prediction.enabled", true) ? String.valueOf(ChatColor.GREEN) + "Enabled" : String.valueOf(ChatColor.RED) + "Disabled"));
         if (this.plugin.getConfig().getBoolean("lag-prediction.enabled", true) && this.plugin.getLagPredictionManager() != null && this.plugin.getLagPredictionManager().isLagPredicted()) {

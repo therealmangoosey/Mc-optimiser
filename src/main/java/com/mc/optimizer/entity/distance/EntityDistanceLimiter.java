@@ -74,13 +74,13 @@ public class EntityDistanceLimiter {
         this.exemptTypes = new HashSet<EntityType>();
         this.exemptNamedEntities = true;
         try {
-            this.enabled = this.plugin.getConfig().getBoolean("entity.distance-limiter.enabled", true);
-            this.fullAiRadius = this.plugin.getConfig().getInt("entity.distance-limiter.full-ai-radius", 24);
-            this.reducedAiRadius = this.plugin.getConfig().getInt("entity.distance-limiter.reduced-ai-radius", 32);
-            this.minimalAiRadius = this.plugin.getConfig().getInt("entity.distance-limiter.minimal-ai-radius", 48);
-            this.noAiRadius = this.plugin.getConfig().getInt("entity.distance-limiter.no-ai-radius", 64);
-            this.exemptTypes = new HashSet<EntityType>();
-            this.exemptNamedEntities = this.plugin.getConfig().getBoolean("entity.distance-limiter.exempt-named-entities", true);
+            this.enabled = this.plugin.getConfig().getBoolean("entity-distance-limit.enabled", true);
+            this.fullAiRadius = this.plugin.getConfig().getInt("entity-distance-limit.full-ai-radius", 24);
+            this.reducedAiRadius = this.plugin.getConfig().getInt("entity-distance-limit.reduced-ai-radius", 32);
+            this.minimalAiRadius = this.plugin.getConfig().getInt("entity-distance-limit.minimal-ai-radius", 48);
+            this.noAiRadius = this.plugin.getConfig().getInt("entity-distance-limit.no-ai-radius", 64);
+            this.exemptTypes = new HashSet<EntityType>(this.config.getEntityExemptTypes());
+            this.exemptNamedEntities = this.plugin.getConfig().getBoolean("entity-distance-limit.exempt-named-entities", true);
         }
         catch (Exception e) {
             this.logger.warning("Error loading EntityDistanceLimiter configuration: " + e.getMessage());
@@ -294,8 +294,12 @@ public class EntityDistanceLimiter {
     private static class EntityAIState {
         private EntityAILevel currentLevel = EntityAILevel.FULL;
         private LivingEntity savedTarget = null;
+        private boolean savedAware = true;
 
         public EntityAIState(LivingEntity entity) {
+            if (entity instanceof Mob) {
+                this.savedAware = ((Mob)entity).isAware();
+            }
             if (entity instanceof Creature) {
                 this.savedTarget = ((Creature)entity).getTarget();
             }
@@ -315,6 +319,10 @@ public class EntityDistanceLimiter {
 
         public void setSavedTarget(LivingEntity target) {
             this.savedTarget = target;
+        }
+
+        public boolean isSavedAware() {
+            return this.savedAware;
         }
     }
 }

@@ -101,7 +101,7 @@ extends JavaPlugin {
         this.configManager = new ConfigManager(this);
         this.configManager.loadConfig();
         try {
-            if (this.getConfig().getBoolean("conflicts.auto-detect", true)) {
+            if (this.getConfig().getBoolean("general.auto-detect-conflicts", true)) {
                 this.detectConflicts();
             }
         }
@@ -134,7 +134,7 @@ extends JavaPlugin {
             mcOptimizerCmd.setTabCompleter((TabCompleter)optimizerCommand);
         }
         try {
-            if (this.getConfig().getBoolean("metrics.enabled", true)) {
+            if (this.getConfig().getBoolean("general.metrics-enabled", true)) {
                 this.setupMetrics();
             }
         }
@@ -206,7 +206,7 @@ extends JavaPlugin {
     private void initializeComponents() {
         Logger logger = this.getLogger();
         try {
-            if (this.getConfig().getBoolean("chunks.enabled", true) && !this.isFeatureConflicting("chunk")) {
+            if (this.getConfig().getBoolean("chunk.enabled", true) && !this.isFeatureConflicting("chunk")) {
                 logger.info("Initializing chunk management...");
                 this.chunkManager = new ChunkManager(this, new ChunkConfigManager(this));
             } else {
@@ -361,7 +361,7 @@ extends JavaPlugin {
             logger.warning("Error initializing performance report manager: " + e.getMessage());
         }
         try {
-            if (this.getConfig().getBoolean("api.enabled", false)) {
+            if (this.getConfig().getBoolean("integration-api.enabled", false)) {
                 logger.info("Initializing plugin integration API...");
                 this.integrationAPI = new PluginIntegrationAPI(this, this.configManager);
             } else {
@@ -505,7 +505,7 @@ extends JavaPlugin {
         this.detectedConflicts.clear();
         this.configManager.loadConfig();
         try {
-            if (this.getConfig().getBoolean("conflicts.auto-detect", true)) {
+            if (this.getConfig().getBoolean("general.auto-detect-conflicts", true)) {
                 this.detectConflicts();
             }
         }

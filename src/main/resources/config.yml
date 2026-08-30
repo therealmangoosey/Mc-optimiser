@@ -199,17 +199,17 @@ task-optimization:
   max-tasks-in-report: 20
 
 network-optimization:
-  enabled: true
-  batch-entity-packets: true
-  prioritize-player-focus: true
-  reduce-distant-packets: true
+  enabled: false
+  batch-entity-packets: false
+  prioritize-player-focus: false
+  reduce-distant-packets: false
   compression-level: 5
   visibility-percent: 85
 network:
-  enabled: true
-  batch-entity-packets: true
-  prioritize-player-focus: true
-  reduce-distant-packets: true
+  enabled: false
+  batch-entity-packets: false
+  prioritize-player-focus: false
+  reduce-distant-packets: false
   compression-level: 5
   visibility-percent: 85
 

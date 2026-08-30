@@ -78,7 +78,7 @@ implements Listener {
     private boolean acceleratedItemDespawn;
     private BukkitTask optimizationTask;
     private final Map<UUID, Long> entityLastSeen = new ConcurrentHashMap<UUID, Long>();
-    private final Set<UUID> limitedAIMobs = Collections.newSetFromMap(new ConcurrentHashMap());
+    private final Set<UUID> limitedAIMobs = Collections.newSetFromMap(new ConcurrentHashMap<UUID, Boolean>());
     private int entitiesRemoved = 0;
     private int itemsRemoved = 0;
     private int itemsStacked = 0;
@@ -382,7 +382,7 @@ implements Listener {
         }
     }
 
-    @EventHandler(priority=EventPriority.MONITOR)
+    @EventHandler(priority=EventPriority.HIGHEST, ignoreCancelled=true)
     public void onEntitySpawn(EntitySpawnEvent event) {
         if (!event.isCancelled()) {
             Entity entity = event.getEntity();
@@ -407,7 +407,7 @@ implements Listener {
         }
     }
 
-    @EventHandler(priority=EventPriority.MONITOR)
+    @EventHandler(priority=EventPriority.HIGHEST, ignoreCancelled=true)
     public void onCreatureSpawn(CreatureSpawnEvent event) {
         if (!event.isCancelled() && event.getEntity() instanceof Mob) {
             Mob mob = (Mob)event.getEntity();

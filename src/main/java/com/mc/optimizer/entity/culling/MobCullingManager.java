@@ -90,15 +90,15 @@ public class MobCullingManager {
             this.preserveEquippedMobs = true;
             this.preserveBossMobs = true;
             this.maxMobsPerType = new HashMap<EntityType, Integer>();
-            this.enabled = this.plugin.getConfig().getBoolean("entities.culling.enabled", true);
-            this.maxMobsPerWorld = this.plugin.getConfig().getInt("entities.culling.max-mobs-per-world", 1000);
-            this.playerProtectionRadius = this.plugin.getConfig().getInt("entities.culling.player-protection-radius", 48);
-            this.preserveNamedMobs = this.plugin.getConfig().getBoolean("entities.culling.preserve-named-mobs", true);
-            this.preserveTamedMobs = this.plugin.getConfig().getBoolean("entities.culling.preserve-tamed-mobs", true);
-            this.preserveEquippedMobs = this.plugin.getConfig().getBoolean("entities.culling.preserve-equipped-mobs", true);
-            this.preserveBossMobs = this.plugin.getConfig().getBoolean("entities.culling.preserve-boss-mobs", true);
-            if (this.plugin.getConfig().isConfigurationSection("entities.culling.max-per-type")) {
-                for (String key : this.plugin.getConfig().getConfigurationSection("entities.culling.max-per-type").getKeys(false)) {
+            this.enabled = this.plugin.getConfig().getBoolean("mob-culling.enabled", true);
+            this.maxMobsPerWorld = this.plugin.getConfig().getInt("mob-culling.max-mobs-per-world", 1000);
+            this.playerProtectionRadius = this.plugin.getConfig().getInt("mob-culling.player-protection-radius", 48);
+            this.preserveNamedMobs = this.plugin.getConfig().getBoolean("mob-culling.preserve-named-mobs", true);
+            this.preserveTamedMobs = this.plugin.getConfig().getBoolean("mob-culling.preserve-tamed-mobs", true);
+            this.preserveEquippedMobs = this.plugin.getConfig().getBoolean("mob-culling.preserve-equipped-mobs", true);
+            this.preserveBossMobs = this.plugin.getConfig().getBoolean("mob-culling.preserve-boss-mobs", true);
+            if (this.plugin.getConfig().isConfigurationSection("mob-culling.max-per-type")) {
+                for (String key : this.plugin.getConfig().getConfigurationSection("mob-culling.max-per-type").getKeys(false)) {
                     try {
                         EntityType type = EntityType.valueOf((String)key.toUpperCase());
                         int limit = this.plugin.getConfig().getInt("entities.culling.max-per-type." + key, 50);
@@ -328,7 +328,7 @@ public class MobCullingManager {
 
     public boolean isEnabled() {
         try {
-            return this.plugin.getConfig().getBoolean("entities.culling.enabled", true);
+            return this.plugin.getConfig().getBoolean("mob-culling.enabled", true);
         }
         catch (Exception e) {
             this.logger.warning("Error checking if mob culling is enabled: " + e.getMessage());
