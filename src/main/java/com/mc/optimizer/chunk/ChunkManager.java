@@ -96,6 +96,10 @@ public final class ChunkManager implements Listener {
         recordPlayerActivity(event.getPlayer());
     }
 
+    public boolean isEnabled() {
+        return task != null && !task.isCancelled();
+    }
+
     public Map<String, Object> getStats() {
         Map<String, Object> stats = new HashMap<>();
         stats.put("trackedChunks", lastAccessedChunks.size());
