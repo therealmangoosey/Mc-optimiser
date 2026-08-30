@@ -1,9 +1,18 @@
+import java.util.regex.Pattern
+
 plugins {
     id("java")
 }
 
+val configFile = file("src/main/resources/config.yml")
+val versionPattern = Pattern.compile("(?m)^# Version: ([0-9]+\\.[0-9]+\\.[0-9]+)\\s*$")
+val configVersion = versionPattern.matcher(configFile.readText()).let { matcher ->
+    require(matcher.find()) { "Could not find '# Version: x.y.z' in ${configFile.path}" }
+    matcher.group(1)
+}
+
 group = "com.mc.optimizer"
-version = "1.2.2"
+version = configVersion
 
 repositories {
     mavenCentral()
@@ -11,13 +20,7 @@ repositories {
 }
 
 dependencies {
-    // Dynamic range picks up the latest 26.2 build. Pin to an exact build
-    // string (e.g. "26.2.build.119-stable") instead if you want reproducible
-    // builds - check https://repo.papermc.io/repository/maven-public/io/papermc/paper/paper-api/
-    // for available builds.
     compileOnly("io.papermc.paper:paper-api:[26.2.build,)")
-    // paper-api declares org.jetbrains:annotations as compileOnly and does not
-    // inject it into its published POM, so consumers must declare it themselves.
     compileOnly("org.jetbrains:annotations:26.0.2")
 }
 
@@ -33,4 +36,7 @@ tasks.compileJava {
 
 tasks.processResources {
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    filesMatching("plugin.yml") {
+        expand("version" to project.version.toString())
+    }
 }
