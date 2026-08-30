@@ -44,6 +44,10 @@ MCOptimizer exposes several optimization systems through `config.yml`. Features 
 
 Always test configuration changes on a backup or staging server before using them on a production world.
 
+## Startup update check
+
+Every server start checks the latest GitHub Release asynchronously. The plugin reports whether it is up to date or behind, including the version difference, without automatically replacing the server JAR.
+
 ## Releases
 
 GitHub Actions builds the plugin on pushes to `main`, pull requests, and manual runs. Release builds publish the versioned plugin JAR and source ZIP to GitHub Releases.
