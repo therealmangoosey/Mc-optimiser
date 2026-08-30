@@ -1,9 +1,9 @@
 # CI workflow: manual step required
 
-`.github/workflows/build-and-release.yml` exists in this working tree but is
-**not committed or pushed**. The Arena bot token lacks the GitHub App
-`workflows` permission, so any push containing a file under
-`.github/workflows/` is rejected by GitHub:
+The CI workflow is committed to this repo at **`ci/build-and-release.yml`**,
+not at its real path. The Arena bot token lacks the GitHub App `workflows`
+permission, so any push containing a file under `.github/workflows/` is
+rejected by GitHub:
 
     refusing to allow a GitHub App to create or update workflow
     `.github/workflows/build-and-release.yml` without `workflows` permission
@@ -12,16 +12,23 @@ This is a hard server-side restriction; it cannot be worked around from here.
 
 ## How to add it
 
-Push it yourself from a local clone with normal user credentials:
+The workflow is already committed at `ci/build-and-release.yml`. It only needs
+to be moved into place, which requires credentials with the `workflow` scope
+(i.e. you, not the bot):
 
     git fetch origin
     git checkout arena/01a04fff-mc-optimiser
-    # copy .github/workflows/build-and-release.yml in, then:
-    git add .github/workflows/build-and-release.yml
+    git pull
+    mkdir -p .github/workflows
+    git mv ci/build-and-release.yml .github/workflows/build-and-release.yml
     git commit -m "Add JAR build and release workflow"
     git push origin arena/01a04fff-mc-optimiser
 
-The workflow only becomes active once it is on the default branch (`main`).
+No copy-paste is needed - the exact validated file is already in the repo.
+
+Then merge to `main`. **The workflow only becomes active once it is on the
+default branch**, and only a push to `main` produces the rolling `latest`
+release with the JAR attached. Merging PR #2 will do both at once.
 
 ## Before the first run: regenerate the Gradle wrapper
 
