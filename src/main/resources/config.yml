@@ -1,32 +1,47 @@
 # MCOptimizer Configuration
 # Version: 1.2.2
 
-# General Settings
 general:
   debug: false
   performance-reports: true
   monitor-interval: 60
   prefix: "&6[MCOptimizer] &r"
   metrics: true
+  metrics-enabled: true
+  auto-detect-conflicts: true
+  excluded-plugins: []
+  reload-command-enabled: true
 
-# Chunk Management
 chunk:
   enabled: true
+  pre-generate-spawn: true
   max-chunks-per-tick: 10
-  unload-after-seconds: 30
-  max-view-distance: -1
   spawn-chunk-radius: 8
+  player-chunk-radius: 6
+  ticking-radius: 4
+  unload-dynamically: true
+  unload-delay: 30
+  optimize-world-saving: true
+  world-save-interval: 300
+  max-view-distance: -1
   prioritize-player-chunks: true
   throttle-chunk-generation: true
   respect-essential-chunks: true
 
-# Entity Management
 entity:
   enabled: true
+  activation-range: 32
+  optimize-ai: true
+  optimize-pathfinding: true
+  max-mobs-per-chunk: 25
+  despawn-range: 128
+  reduce-mob-spawns: true
+  mob-spawn-factor: 0.8
+  merge-items: true
+  smart-xp-merge: true
   max-entities-per-chunk: 25
   max-items-per-chunk: 20
   check-interval-ticks: 100
-  merge-items: true
   item-merge-radius: 2.5
   limit-distant-mob-ai: true
   distant-mob-threshold: 48
@@ -39,35 +54,45 @@ entity:
     protected-farm-mobs:
       - VILLAGER
       - IRON_GOLEM
-      - FARMER
       - ZOMBIE_VILLAGER
-  mob-culling:
-    enabled: true
-    max-mobs-per-world: 800
-    max-per-type:
-      zombie: 70
-      skeleton: 70
-      creeper: 50
-      spider: 50
-      enderman: 30
-      slime: 20
-      phantom: 15
-    player-protection-radius: 64
-    preserve-named-mobs: true
-    preserve-tamed-mobs: true
-    preserve-equipped-mobs: true
-    preserve-boss-mobs: true
 
-# Redstone Optimization
+mob-culling:
+  enabled: true
+  interval-ticks: 600
+  intelligent-culling: true
+  prioritize-lagging-entities: true
+  max-mobs-per-player: 20
+  exclude-bosses: true
+  exclude-named-mobs: true
+  max-mobs-per-world: 800
+  max-per-type:
+    zombie: 70
+    skeleton: 70
+    creeper: 50
+    spider: 50
+    enderman: 30
+    slime: 20
+    phantom: 15
+  player-protection-radius: 64
+  preserve-named-mobs: true
+  preserve-tamed-mobs: true
+  preserve-equipped-mobs: true
+  preserve-boss-mobs: true
+
 redstone:
   enabled: true
+  limit-redstone-clock: true
+  max-tick-rate: 10
+  detect-redstone-clock: true
+  max-replace-count: 100
+  disable-in-unused-chunks: true
+  exempt-radius: 8
   max-updates-per-tick: 100
   disable-when-no-players-nearby: true
   nearby-distance: 64
   limit-piston-chain-length: 12
   smart-hoppers: true
 
-# Physics Optimization
 physics:
   enabled: true
   max-falling-blocks-per-tick: 20
@@ -75,7 +100,14 @@ physics:
   physics-range: 48
   adaptive-throttling: true
 
-# Performance Monitor
+performance-monitor:
+  enabled: true
+  interval-seconds: 30
+  auto-warn-threshold: true
+  tps-warn-threshold: 16.0
+  notify-admins: true
+  log-to-console: true
+  broadcast-warnings: false
 monitor:
   enabled: true
   history-size: 30
@@ -90,7 +122,6 @@ monitor:
     chat: true
     actionbar: false
 
-# Anti-Lag Measures
 anti-lag:
   enabled: true
   threshold-tps: 17.0
@@ -102,7 +133,6 @@ anti-lag:
     suspend-redstone: true
     suggest-gc: true
 
-# Plugin Compatibility
 compatibility:
   auto-detect-conflicts: true
   excluded-plugins: []
@@ -113,16 +143,17 @@ compatibility:
     floodgate-compatibility: true
     bedrock-optimizations: true
 
-# Configuration File Analyzer
 config-analyzer:
   enabled: true
   analyze-server-properties: true
   analyze-bukkit-yml: true
   analyze-spigot-yml: true
-  # Paper's old single-file paper.yml no longer exists on current Paper.
+  # Current Paper uses config/paper-global.yml and paper-world-defaults.yml,
+  # not the old single paper.yml format.
   analyze-paper-yml: false
+  apply-changes: false
+  create-backups: true
 
-# Memory Leak Detection
 memory-leak:
   enabled: true
   check-interval: 15
@@ -130,8 +161,15 @@ memory-leak:
   min-leak-threshold-mb: 50
   create-heap-dump: false
   show-leak-sources: true
+memory-leak-detection:
+  enabled: true
+  check-interval: 15
+  leak-threshold-mb: 50
+  high-memory-alerts: true
+  high-memory-threshold-percent: 80
+  dump-heap-on-leak: false
+  show-leak-sources: true
 
-# Entity Distance Limiting
 entity-distance-limit:
   enabled: true
   full-ai-radius: 32
@@ -144,7 +182,6 @@ entity-distance-limit:
     - VILLAGER
   exempt-named-entities: true
 
-# TNT Optimization
 tnt-optimization:
   enabled: true
   max-tnt-per-tick: 10
@@ -153,15 +190,21 @@ tnt-optimization:
   dynamic-explosion-scaling: true
   optimize-particles: true
 
-# Scheduled Task Optimization
 task-optimization:
   enabled: true
   monitor-other-plugins: true
+  warn-inefficient: true
   warn-inefficient-tasks: true
   min-task-time-ms: 5
   max-tasks-in-report: 20
 
-# Network Traffic Optimization
+network-optimization:
+  enabled: true
+  batch-entity-packets: true
+  prioritize-player-focus: true
+  reduce-distant-packets: true
+  compression-level: 5
+  visibility-percent: 85
 network:
   enabled: true
   batch-entity-packets: true
@@ -170,16 +213,15 @@ network:
   compression-level: 5
   visibility-percent: 85
 
-# AFK Player Detection
 afk-detection:
   enabled: true
+  timeout-seconds: 300
   afk-timeout-seconds: 300
   reduce-view-distance: true
   afk-view-distance: 4
   notify-players: true
   detect-no-position-change: true
 
-# Performance Stress Testing
 stress-test:
   enabled: false
   require-op: true
@@ -188,17 +230,16 @@ stress-test:
   allow-in-production: false
   auto-cleanup: true
 
-# Performance Reports
 performance-reports:
   enabled: true
   auto-generate: true
+  interval-minutes: 60
   report-interval: 60
   history-days: 7
   include-plugin-metrics: true
   export-to-web: false
   max-reports: 30
 
-# Lag Prediction
 lag-prediction:
   enabled: true
   interval: 30
@@ -208,14 +249,13 @@ lag-prediction:
   memory-threshold: 2048
   notify-admins: true
   auto-tune: false
-  # The legacy embedded web interface has been disabled.
+  # Legacy embedded web interface is intentionally disabled.
   web-interface:
     enabled: false
     port: 8080
     bind-address: "127.0.0.1"
     access-token: ""
 
-# Plugin Integration API
 integration-api:
   enabled: true
   log-registrations: true
