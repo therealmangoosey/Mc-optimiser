@@ -9,7 +9,6 @@ permissions:
 
 jobs:
   repair:
-    if: contains(github.event.head_commit.message, 'Check for updates when server starts')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -20,6 +19,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          if git log -1 --format=%s | grep -q '\[bootstrap-repair\]'; then
+            exit 0
+          fi
           git checkout 74d396e731979c9d0612ae409e7f7475d36132f3 -- src/main/java/com/mc/optimizer/OptimizerPlugin.java
           python3 - <<'PY'
           from pathlib import Path
@@ -34,25 +36,28 @@ jobs:
           PY
 
       - name: Build repaired project
+        if: success()
         run: |
           chmod +x ./gradlew
           ./gradlew --no-daemon clean build --stacktrace
 
       - name: Commit repaired bootstrap
+        if: success()
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add src/main/java/com/mc/optimizer/OptimizerPlugin.java
-          git commit -m "Restore working plugin bootstrap and keep startup update check [skip-release]"
+          git commit -m "Restore working plugin bootstrap [bootstrap-repair]"
           git push
 
       - name: Remove repair workflow
+        if: success()
         shell: bash
         run: |
           set -euo pipefail
           rm -f .github/workflows/repair-plugin-main.yml
           git add -u .github/workflows/repair-plugin-main.yml
-          git commit -m "Remove temporary bootstrap repair workflow [skip-release]" || true
+          git commit -m "Remove temporary bootstrap repair [bootstrap-repair]" || true
           git push || true
