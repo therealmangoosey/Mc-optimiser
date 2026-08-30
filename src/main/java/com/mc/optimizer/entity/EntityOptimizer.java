@@ -23,7 +23,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntitySpawnEvent;
 import org.bukkit.event.entity.ItemSpawnEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitTask;
 
 /** Lightweight entity guard. Normal operation is event-driven; world scans only run under pressure. */
@@ -154,6 +153,10 @@ public final class EntityOptimizer implements Listener {
             itemsMerged++;
             return;
         }
+    }
+
+    public boolean isEnabled() {
+        return pressureTask != null && !pressureTask.isCancelled();
     }
 
     public Map<String, Object> getStats() {
