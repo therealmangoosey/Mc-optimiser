@@ -23,7 +23,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntitySpawnEvent;
 import org.bukkit.event.entity.ItemSpawnEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitTask;
 
 /** Lightweight entity guard. Normal operation is event-driven; world scans only run under pressure. */
@@ -107,9 +106,7 @@ public final class EntityOptimizer implements Listener {
         return true;
     }
 
-    private long chunkKey(Chunk chunk) {
-        return ((long) chunk.getX() << 32) ^ (chunk.getZ() & 0xffffffffL);
-    }
+    private long chunkKey(Chunk chunk) { return ((long) chunk.getX() << 32) ^ (chunk.getZ() & 0xffffffffL); }
 
     private int countLivingEntities(Chunk chunk) {
         int count = 0;
@@ -156,6 +153,8 @@ public final class EntityOptimizer implements Listener {
         }
     }
 
+    public boolean isEnabled() { return pressureTask != null && !pressureTask.isCancelled(); }
+
     public Map<String, Object> getStats() {
         Map<String, Object> stats = new HashMap<>();
         stats.put("entitiesRemoved", entitiesRemoved);
@@ -166,9 +165,6 @@ public final class EntityOptimizer implements Listener {
     }
 
     public void shutdown() {
-        if (pressureTask != null) {
-            pressureTask.cancel();
-            pressureTask = null;
-        }
+        if (pressureTask != null) { pressureTask.cancel(); pressureTask = null; }
     }
 }
