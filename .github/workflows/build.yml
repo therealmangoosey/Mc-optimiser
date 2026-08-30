@@ -34,55 +34,41 @@ jobs:
       - name: Build JAR
         run: ./gradlew --no-daemon clean build --stacktrace
 
-      - name: Show built JARs
-        run: ls -lah build/libs/
-
       - name: Prepare release files
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-        shell: bash
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
-          set -euo pipefail
-          mkdir -p release
-          JAR_FILE=$(find build/libs -maxdepth 1 -type f -name '*.jar' ! -name '*-sources.jar' ! -name '*-javadoc.jar' | head -n 1)
-          test -n "$JAR_FILE"
-          cp "$JAR_FILE" "release/MCOptimizer.jar"
-
-          mkdir -p package
-          cp "$JAR_FILE" package/MCOptimizer.jar
-          cp README.md package/README.md
-          if [ -f LICENSE ]; then cp LICENSE package/LICENSE; fi
-          if [ -f src/main/resources/plugin.yml ]; then cp src/main/resources/plugin.yml package/plugin.yml; fi
-          if [ -f src/main/resources/config.yml ]; then cp src/main/resources/config.yml package/config.yml; fi
-          if [ -f src/main/resources/paper-plugin.yml ]; then cp src/main/resources/paper-plugin.yml package/paper-plugin.yml; fi
-
-          (cd package && zip -9 -r "../release/MCOptimizer.zip" .)
-          ls -lah release/
+          VERSION="${GITHUB_RUN_NUMBER}"
+          JAR=$(find build/libs -maxdepth 1 -type f -name '*.jar' ! -name '*-sources.jar' ! -name '*-javadoc.jar' | head -n 1)
+          test -n "$JAR"
+          cp "$JAR" "MCOptimizer-${VERSION}.jar"
+          zip -r "MCOptimizer-${VERSION}.zip" src gradle build.gradle.kts settings.gradle.kts gradle.properties plugin.yml README.md 2>/dev/null || \
+          zip -r "MCOptimizer-${VERSION}.zip" src gradle build.gradle.kts settings.gradle.kts gradle.properties plugin.yml README.md
 
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v4
         with:
           name: MCOptimizer-JAR
-          path: release/MCOptimizer.jar
+          path: MCOptimizer-*.jar
           if-no-files-found: error
           retention-days: 30
 
       - name: Upload ZIP artifact
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
         with:
           name: MCOptimizer-ZIP
-          path: release/MCOptimizer.zip
+          path: MCOptimizer-*.zip
           if-no-files-found: error
           retention-days: 30
 
-      - name: Create GitHub Release
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: auto-v${{ github.run_number }}
-          name: MCOptimizer v${{ github.run_number }}
-          generate_release_notes: true
-          make_latest: true
-          files: |
-            release/MCOptimizer.jar
-            release/MCOptimizer.zip
+      - name: Publish GitHub Release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ github.run_number }}
+        run: |
+          gh release create "v${VERSION}" \
+            "MCOptimizer-${VERSION}.jar" \
+            "MCOptimizer-${VERSION}.zip" \
+            --title "MCOptimizer v${VERSION}" \
+            --generate-notes
