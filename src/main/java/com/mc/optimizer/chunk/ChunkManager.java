@@ -15,7 +15,6 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 
 /** Lightweight activity-based chunk manager. */
@@ -39,10 +38,7 @@ public final class ChunkManager implements Listener {
 
     private void tick() {
         long now = System.currentTimeMillis() / 1000L;
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            markAccessed(player.getLocation().getChunk(), now);
-        }
-
+        for (Player player : Bukkit.getOnlinePlayers()) markAccessed(player.getLocation().getChunk(), now);
         for (World world : Bukkit.getWorlds()) {
             for (Chunk chunk : world.getLoadedChunks()) {
                 if (isPlayerChunk(chunk) || isSpawnChunk(chunk)) continue;
@@ -58,9 +54,7 @@ public final class ChunkManager implements Listener {
         lastAccessedChunks.entrySet().removeIf(entry -> now - entry.getValue() > unloadAfterSeconds * 2L);
     }
 
-    private void markAccessed(Chunk chunk, long now) {
-        lastAccessedChunks.put(getChunkKey(chunk), now);
-    }
+    private void markAccessed(Chunk chunk, long now) { lastAccessedChunks.put(getChunkKey(chunk), now); }
 
     private boolean isPlayerChunk(Chunk chunk) {
         for (Player player : Bukkit.getOnlinePlayers()) {
@@ -78,23 +72,19 @@ public final class ChunkManager implements Listener {
         return dx * dx + dz * dz <= radius * radius;
     }
 
-    private String getChunkKey(Chunk chunk) {
-        return chunk.getWorld().getUID() + ":" + chunk.getX() + ":" + chunk.getZ();
-    }
+    private String getChunkKey(Chunk chunk) { return chunk.getWorld().getUID() + ":" + chunk.getX() + ":" + chunk.getZ(); }
 
     public void recordPlayerActivity(Player player) {
         if (player != null) markAccessed(player.getLocation().getChunk(), System.currentTimeMillis() / 1000L);
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onChunkLoad(ChunkLoadEvent event) {
-        markAccessed(event.getChunk(), System.currentTimeMillis() / 1000L);
-    }
+    public void onChunkLoad(ChunkLoadEvent event) { markAccessed(event.getChunk(), System.currentTimeMillis() / 1000L); }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onPlayerJoin(PlayerJoinEvent event) {
-        recordPlayerActivity(event.getPlayer());
-    }
+    public void onPlayerJoin(PlayerJoinEvent event) { recordPlayerActivity(event.getPlayer()); }
+
+    public boolean isEnabled() { return task != null && !task.isCancelled(); }
 
     public Map<String, Object> getStats() {
         Map<String, Object> stats = new HashMap<>();
@@ -105,10 +95,7 @@ public final class ChunkManager implements Listener {
     }
 
     public void shutdown() {
-        if (task != null) {
-            task.cancel();
-            task = null;
-        }
+        if (task != null) { task.cancel(); task = null; }
         lastAccessedChunks.clear();
         logger.fine("Chunk manager stopped");
     }
