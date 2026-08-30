@@ -136,7 +136,7 @@ public class TaskOptimizer {
     }
 
     private void checkInefficientTasks() {
-        List inefficientTasks = this.monitoredTasks.values().stream().filter(info -> info.getAverageExecutionTimeMs() > (double)this.minTaskTimeMs).sorted(Comparator.comparingDouble(TaskInfo::getAverageExecutionTimeMs).reversed()).limit(this.maxTasksInReport).collect(Collectors.toList());
+        List<TaskInfo> inefficientTasks = this.monitoredTasks.values().stream().filter(info -> info.getAverageExecutionTimeMs() > (double)this.minTaskTimeMs).sorted(Comparator.comparingDouble(TaskInfo::getAverageExecutionTimeMs).reversed()).limit(this.maxTasksInReport).collect(Collectors.toList());
         if (!inefficientTasks.isEmpty()) {
             this.logger.warning("Detected " + inefficientTasks.size() + " potentially inefficient tasks:");
             for (TaskInfo task : inefficientTasks) {
@@ -150,7 +150,7 @@ public class TaskOptimizer {
         stats.put("enabled", this.enabled);
         stats.put("activeTasks", this.monitoredTasks.size());
         stats.put("monitoredPlugins", this.pluginStats.size());
-        List inefficientTaskList = this.monitoredTasks.values().stream().filter(info -> info.getAverageExecutionTimeMs() > (double)this.minTaskTimeMs).sorted(Comparator.comparingDouble(TaskInfo::getAverageExecutionTimeMs).reversed()).limit(this.maxTasksInReport).map(task -> {
+        List<Map<String, Object>> inefficientTaskList = this.monitoredTasks.values().stream().filter(info -> info.getAverageExecutionTimeMs() > (double)this.minTaskTimeMs).sorted(Comparator.comparingDouble(TaskInfo::getAverageExecutionTimeMs).reversed()).limit(this.maxTasksInReport).map(task -> {
             HashMap<String, Object> taskMap = new HashMap<String, Object>();
             taskMap.put("id", task.getTaskId());
             taskMap.put("plugin", task.getPlugin().getName());

@@ -194,7 +194,7 @@ implements Listener {
         if (itemStack.getAmount() >= itemStack.getMaxStackSize()) {
             return;
         }
-        List nearbyEntities = item.getNearbyEntities(this.itemMergeRadius, this.itemMergeRadius, this.itemMergeRadius);
+        List<Entity> nearbyEntities = item.getNearbyEntities(this.itemMergeRadius, this.itemMergeRadius, this.itemMergeRadius);
         for (Entity nearby : nearbyEntities) {
             int maxStackSize;
             Item nearbyItem;
@@ -367,7 +367,7 @@ implements Listener {
                 ++itemCount;
             }
             if (this.acceleratedItemDespawn && itemCount > this.maxItemsPerChunk) {
-                ArrayList<Object> chunkItems = new ArrayList<Object>();
+                ArrayList<Item> chunkItems = new ArrayList<Item>();
                 for (Entity entity : chunk.getEntities()) {
                     if (!(entity instanceof Item)) continue;
                     chunkItems.add((Item)entity);
@@ -375,7 +375,7 @@ implements Listener {
                 chunkItems.sort(Comparator.comparingInt(Entity::getTicksLived).reversed());
                 int toAccelerate = itemCount - this.maxItemsPerChunk;
                 for (int i = 0; i < Math.min(toAccelerate, chunkItems.size()); ++i) {
-                    Item oldItem = (Item)chunkItems.get(i);
+                    Item oldItem = chunkItems.get(i);
                     oldItem.setTicksLived(Math.min(oldItem.getTicksLived() + 1000, 5980));
                 }
             }

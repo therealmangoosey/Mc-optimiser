@@ -151,7 +151,7 @@ public class MobCullingManager {
                 Map<EntityType, Integer> counts = entry.getValue();
                 int total = counts.values().stream().mapToInt(Integer::intValue).sum();
                 sb.append("  ").append(world.getName()).append(": ").append(total).append(" total mobs\n");
-                counts.entrySet().stream().sorted(Map.Entry.comparingByValue().reversed()).limit(5L).forEach(typeEntry -> sb.append("    ").append(((EntityType)typeEntry.getKey()).name()).append(": ").append(typeEntry.getValue()).append("\n"));
+                counts.entrySet().stream().sorted(Map.Entry.<EntityType, Integer>comparingByValue().reversed()).limit(5L).forEach(typeEntry -> sb.append("    ").append(((EntityType)typeEntry.getKey()).name()).append(": ").append(typeEntry.getValue()).append("\n"));
             }
             this.logger.fine(sb.toString());
         }
@@ -181,12 +181,12 @@ public class MobCullingManager {
             if (totalMobs > effectiveMaxMobsPerWorld) {
                 int excessMobs = totalMobs - effectiveMaxMobsPerWorld;
                 ArrayList<Map.Entry<EntityType, Integer>> sortedCounts = new ArrayList<Map.Entry<EntityType, Integer>>(counts.entrySet());
-                sortedCounts.sort(Map.Entry.comparingByValue().reversed());
+                sortedCounts.sort(Map.Entry.<EntityType, Integer>comparingByValue().reversed());
                 int remainingExcess = excessMobs;
-                for (Map.Entry entry2 : sortedCounts) {
+                for (Map.Entry<EntityType, Integer> entry2 : sortedCounts) {
                     if (remainingExcess <= 0) break;
-                    EntityType type = (EntityType)entry2.getKey();
-                    int typeCount = (Integer)entry2.getValue();
+                    EntityType type = entry2.getKey();
+                    int typeCount = entry2.getValue();
                     int typeMax = this.maxMobsPerType.getOrDefault(type, Integer.MAX_VALUE);
                     if (highMemory || highCPU) {
                         typeMax = (int)((double)typeMax * 0.7);
@@ -232,14 +232,14 @@ public class MobCullingManager {
             Map<EntityType, Integer> typeTargets = worldEntry.getValue();
             if (typeTargets.isEmpty()) continue;
             HashMap<EntityType, Integer> removed = new HashMap<EntityType, Integer>();
-            HashMap<EntityType, List> eligibleByType = new HashMap<EntityType, List>();
+            HashMap<EntityType, List<Entity>> eligibleByType = new HashMap<EntityType, List<Entity>>();
             for (Entity entity : world.getEntities()) {
                 if (!(entity instanceof LivingEntity) || entity instanceof Player || !typeTargets.containsKey(type = entity.getType()) || this.preservedEntities.contains(entity.getUniqueId()) || this.isNearPlayer(entity, this.playerProtectionRadius)) continue;
-                eligibleByType.computeIfAbsent(type, k -> new ArrayList()).add(entity);
+                eligibleByType.computeIfAbsent(type, k -> new ArrayList<Entity>()).add(entity);
             }
-            for (Map.Entry entry : eligibleByType.entrySet()) {
-                type = (EntityType)entry.getKey();
-                List eligible = (List)entry.getValue();
+            for (Map.Entry<EntityType, List<Entity>> entry : eligibleByType.entrySet()) {
+                type = entry.getKey();
+                List<Entity> eligible = entry.getValue();
                 eligible.sort((e1, e2) -> {
                     double d1 = e1.getLocation().distanceSquared(world.getSpawnLocation());
                     double d2 = e2.getLocation().distanceSquared(world.getSpawnLocation());
@@ -247,7 +247,7 @@ public class MobCullingManager {
                 });
                 int toRemove = Math.min(typeTargets.get(type), eligible.size());
                 for (int i = 0; i < toRemove; ++i) {
-                    Entity entity = (Entity)eligible.get(i);
+                    Entity entity = eligible.get(i);
                     entity.remove();
                     removed.put(type, removed.getOrDefault(type, 0) + 1);
                     this.culledByType.put(type, this.culledByType.getOrDefault(type, 0) + 1);
@@ -256,8 +256,8 @@ public class MobCullingManager {
             }
             if (!this.config.isDebugEnabled() || removed.isEmpty()) continue;
             StringBuilder sb = new StringBuilder("Culled mobs in world ").append(world.getName()).append(":\n");
-            for (Map.Entry entry : removed.entrySet()) {
-                sb.append("  ").append(((EntityType)entry.getKey()).name()).append(": ").append(entry.getValue()).append("\n");
+            for (Map.Entry<EntityType, Integer> entry : removed.entrySet()) {
+                sb.append("  ").append(entry.getKey().name()).append(": ").append(entry.getValue()).append("\n");
             }
             this.logger.fine(sb.toString());
         }

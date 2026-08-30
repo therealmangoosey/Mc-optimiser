@@ -711,7 +711,7 @@ public class ConfigManager {
         this.entityReducedAIRadius = this.config.getInt("entity-distance-limit.reduced-ai-radius", 32);
         this.entityMinimalAIRadius = this.config.getInt("entity-distance-limit.minimal-ai-radius", 48);
         this.entityNoAIRadius = this.config.getInt("entity-distance-limit.no-ai-radius", 64);
-        List exemptTypeStrings = this.config.getStringList("entity-distance-limit.exempt-types");
+        List<String> exemptTypeStrings = this.config.getStringList("entity-distance-limit.exempt-types");
         this.entityExemptTypes = new ArrayList<EntityType>();
         for (String typeString : exemptTypeStrings) {
             try {

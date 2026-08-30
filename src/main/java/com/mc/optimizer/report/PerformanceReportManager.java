@@ -399,7 +399,7 @@ public class PerformanceReportManager {
         }
         if (!entityCounts.isEmpty()) {
             sender.sendMessage(String.valueOf(ChatColor.GREEN) + "=== Entity Distribution ===");
-            entityCounts.entrySet().stream().sorted(Map.Entry.comparingByValue().reversed()).limit(5L).forEach(entry -> sender.sendMessage(String.valueOf(ChatColor.YELLOW) + (String)entry.getKey() + ": " + String.valueOf(ChatColor.WHITE) + String.valueOf(entry.getValue())));
+            entityCounts.entrySet().stream().sorted(Map.Entry.<String, Integer>comparingByValue().reversed()).limit(5L).forEach(entry -> sender.sendMessage(String.valueOf(ChatColor.YELLOW) + (String)entry.getKey() + ": " + String.valueOf(ChatColor.WHITE) + String.valueOf(entry.getValue())));
         }
         sender.sendMessage(String.valueOf(ChatColor.GREEN) + "Use " + String.valueOf(ChatColor.YELLOW) + "/mcoptimizer report export " + report.getId() + String.valueOf(ChatColor.GREEN) + " to export this report.");
     }

@@ -154,7 +154,7 @@ public class PerformanceMonitor {
         snapshot.mobEntities = 0;
         snapshot.entitiesByWorld = new HashMap<String, Map<String, Integer>>();
         for (World world : Bukkit.getWorlds()) {
-            List entities = world.getEntities();
+            List<Entity> entities = world.getEntities();
             int worldTotal = entities.size();
             int worldItems = 0;
             int worldMobs = 0;
@@ -203,8 +203,8 @@ public class PerformanceMonitor {
             report.append(String.format("Entities: %d total (%d mobs, %d items)\n", snapshot.totalEntities, snapshot.mobEntities, snapshot.itemEntities));
             if (snapshot.entitiesByWorld.size() > 1) {
                 report.append("  Per-world breakdown:\n");
-                for (Map.Entry<String, Object> entry : snapshot.entitiesByWorld.entrySet()) {
-                    Map counts = (Map)entry.getValue();
+                for (Map.Entry<String, Map<String, Integer>> entry : snapshot.entitiesByWorld.entrySet()) {
+                    Map<String, Integer> counts = entry.getValue();
                     report.append(String.format("    %s: %d total (%d mobs, %d items)\n", entry.getKey(), counts.get("total"), counts.get("mobs"), counts.get("items")));
                 }
             }

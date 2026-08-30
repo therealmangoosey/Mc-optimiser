@@ -143,7 +143,7 @@ implements Listener {
     private void updateEntityVisibility(Player player, PlayerPacketInfo info) {
         Location playerLoc = player.getLocation();
         World world = player.getWorld();
-        List entities = world.getEntities();
+        List<Entity> entities = world.getEntities();
         info.getVisibleEntities().clear();
         for (Entity entity : entities) {
             if (entity.equals((Object)player)) continue;

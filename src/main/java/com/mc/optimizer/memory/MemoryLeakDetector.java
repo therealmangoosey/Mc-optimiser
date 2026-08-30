@@ -151,7 +151,7 @@ public class MemoryLeakDetector {
                 }
                 admin.sendMessage(ChatColor.YELLOW + "Plugins with significant memory usage:");
                 this.pluginMemoryUsage.entrySet().stream()
-                        .sorted(Map.Entry.comparingByValue().reversed())
+                        .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
                         .limit(3)
                         .forEach(entry -> admin.sendMessage(
                                 ChatColor.GRAY + " - " + entry.getKey() + ": " + this.formatSize(entry.getValue())
@@ -268,7 +268,7 @@ public class MemoryLeakDetector {
         if (!this.pluginMemoryUsage.isEmpty()) {
             HashMap<String, String> topPlugins = new HashMap<>();
             this.pluginMemoryUsage.entrySet().stream()
-                    .sorted(Map.Entry.comparingByValue().reversed())
+                    .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
                     .limit(5)
                     .forEach(entry -> topPlugins.put(entry.getKey(), this.formatSize(entry.getValue())));
             stats.put("topPlugins", topPlugins);

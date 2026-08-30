@@ -151,7 +151,7 @@ TabCompleter {
         sender.sendMessage(String.valueOf(ChatColor.YELLOW) + "Total Entities: " + String.valueOf(ChatColor.WHITE) + totalEntities);
         if (!entityStats.isEmpty()) {
             sender.sendMessage(String.valueOf(ChatColor.YELLOW) + "Top entity types:");
-            entityStats.entrySet().stream().sorted(Map.Entry.comparingByValue().reversed()).limit(3L).forEach(entry -> sender.sendMessage(String.valueOf(ChatColor.GRAY) + " - " + (String)entry.getKey() + ": " + String.valueOf(entry.getValue())));
+            entityStats.entrySet().stream().sorted(Map.Entry.<String, Integer>comparingByValue().reversed()).limit(3L).forEach(entry -> sender.sendMessage(String.valueOf(ChatColor.GRAY) + " - " + (String)entry.getKey() + ": " + String.valueOf(entry.getValue())));
         }
         int loadedChunks = 0;
         for (World world : Bukkit.getWorlds()) {
