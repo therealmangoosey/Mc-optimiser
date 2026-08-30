@@ -16,11 +16,13 @@ version = configVersion
 
 repositories {
     mavenCentral()
-    maven("https://repo.papermc.io/repository/maven-public/")
+    maven("https://hub.spigotmc.org/nexus/content/repositories/snapshots/")
 }
 
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:[26.2.build,)")
+    // Compile against the Spigot API, which contains the Bukkit API.
+    // Avoid Paper-only APIs so the same JAR targets Bukkit/Spigot and Paper.
+    compileOnly("org.spigotmc:spigot-api:26.2-R0.1-SNAPSHOT")
     compileOnly("org.jetbrains:annotations:26.0.2")
 }
 
