@@ -1,5 +1,5 @@
 name: MCOptimizer
-version: '1.2.2'
+version: '${version}'
 main: com.mc.optimizer.OptimizerPlugin
 api-version: '26.2'
 description: A versatile Minecraft server optimization plugin enhancing server performance through smart resource management for Paper and Spigot servers
