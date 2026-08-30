@@ -60,8 +60,11 @@ jobs:
         run: |
           set -euo pipefail
           # Exclude -sources/-javadoc in case those artifacts get enabled later.
+          # '|| true' so a missing build/libs reaches the friendly error below
+          # instead of aborting the step via pipefail.
           jar="$(find build/libs -maxdepth 1 -name '*.jar' \
-                   ! -name '*-sources.jar' ! -name '*-javadoc.jar' | sort | head -n1)"
+                   ! -name '*-sources.jar' ! -name '*-javadoc.jar' \
+                   2>/dev/null | sort | head -n1 || true)"
           if [ -z "$jar" ]; then
             echo "::error::No JAR produced in build/libs"
             ls -la build/libs || true
@@ -87,6 +90,16 @@ jobs:
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           set -euo pipefail
+          # Build notes in a file so the text isn't subject to YAML block
+          # indentation being baked into the release body.
+          cat > /tmp/notes.md <<EOF
+          Rolling build of \`main\` at ${GITHUB_SHA}.
+
+          Built against paper-api 26.2.build.121-stable, Java 25.
+          This is an automated development build, not a tagged release.
+          EOF
+          sed -i 's/^          //' /tmp/notes.md
+
           if gh release view latest >/dev/null 2>&1; then
             echo "Removing previous rolling release"
             gh release delete latest --yes --cleanup-tag
@@ -94,10 +107,7 @@ jobs:
           gh release create latest \
             --target "$GITHUB_SHA" \
             --title "Latest development build" \
-            --notes "Rolling build of \`main\` at ${GITHUB_SHA}.
-
-          Built against paper-api 26.2.build.121-stable, Java 25.
-          This is an automated development build, not a tagged release." \
+            --notes-file /tmp/notes.md \
             --prerelease \
             "${{ steps.jar.outputs.path }}"
 
@@ -107,6 +117,13 @@ jobs:
         run: |
           set -euo pipefail
           version="${GITHUB_REF_NAME}"
+          cat > /tmp/notes.md <<EOF
+          MCOptimizer $version
+
+          Built against paper-api 26.2.build.121-stable, Java 25.
+          EOF
+          sed -i 's/^          //' /tmp/notes.md
+
           if gh release view "$version" >/dev/null 2>&1; then
             # Re-running a tag build should refresh the asset, not hard-fail.
             gh release upload "$version" "${{ steps.jar.outputs.path }}" --clobber
@@ -114,9 +131,7 @@ jobs:
             gh release create "$version" \
               --target "$GITHUB_SHA" \
               --title "$version" \
-              --notes "MCOptimizer $version
-
-          Built against paper-api 26.2.build.121-stable, Java 25." \
+              --notes-file /tmp/notes.md \
               --latest \
               "${{ steps.jar.outputs.path }}"
           fi
