@@ -112,6 +112,11 @@ implements Listener {
         this.pistonChains.clear();
     }
 
+    private void cleanupTrackingAndResetTickCounter() {
+        this.cleanupTracking();
+        this.resetTickCounter();
+    }
+
     private boolean arePlayersNearby(Location location) {
         if (!this.disableWhenNoPlayersNearby) {
             return true;
@@ -300,4 +305,3 @@ implements Listener {
         }
     }
 }
-
