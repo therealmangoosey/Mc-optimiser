@@ -1,28 +1,29 @@
 # MCOptimizer Configuration
 # Version: 1.2.3
 
+# Keep the defaults conservative: the plugin should reduce server work, not
+# replace vanilla/Paper systems with expensive constant scans.
 general:
   debug: false
-  performance-reports: true
+  performance-reports: false
   monitor-interval: 60
   prefix: "&6[MCOptimizer] &r"
-  metrics: true
-  metrics-enabled: true
+  metrics: false
   auto-detect-conflicts: true
   excluded-plugins: []
   reload-command-enabled: true
 
 chunk:
   enabled: true
-  pre-generate-spawn: true
-  max-chunks-per-tick: 10
+  pre-generate-spawn: false
+  max-chunks-per-tick: 2
   spawn-chunk-radius: 8
   player-chunk-radius: 6
   ticking-radius: 4
   unload-dynamically: true
-  unload-delay: 30
+  unload-delay: 60
   optimize-world-saving: true
-  world-save-interval: 300
+  world-save-interval: 600
   max-view-distance: -1
   prioritize-player-chunks: true
   throttle-chunk-generation: true
@@ -33,19 +34,20 @@ entity:
   activation-range: 32
   optimize-ai: true
   optimize-pathfinding: true
-  max-mobs-per-chunk: 25
+  max-mobs-per-chunk: 60
   despawn-range: 128
-  reduce-mob-spawns: true
-  mob-spawn-factor: 0.8
-  merge-items: true
-  smart-xp-merge: true
-  max-entities-per-chunk: 25
-  max-items-per-chunk: 20
-  check-interval-ticks: 100
+  reduce-mob-spawns: false
+  mob-spawn-factor: 1.0
+  # Vanilla already merges item entities efficiently. Leave custom scanning off.
+  merge-items: false
+  smart-xp-merge: false
+  max-entities-per-chunk: 80
+  max-items-per-chunk: 40
+  check-interval-ticks: 200
   item-merge-radius: 2.5
-  limit-distant-mob-ai: true
-  distant-mob-threshold: 48
-  accelerated-item-despawn: true
+  limit-distant-mob-ai: false
+  distant-mob-threshold: 64
+  accelerated-item-despawn: false
   farm-protection:
     enabled: true
     protect-villagers: true
@@ -57,22 +59,22 @@ entity:
       - ZOMBIE_VILLAGER
 
 mob-culling:
-  enabled: true
-  interval-ticks: 600
+  enabled: false
+  interval-ticks: 1200
   intelligent-culling: true
   prioritize-lagging-entities: true
-  max-mobs-per-player: 20
+  max-mobs-per-player: 30
   exclude-bosses: true
   exclude-named-mobs: true
-  max-mobs-per-world: 800
+  max-mobs-per-world: 1000
   max-per-type:
-    zombie: 70
-    skeleton: 70
-    creeper: 50
-    spider: 50
-    enderman: 30
-    slime: 20
-    phantom: 15
+    zombie: 100
+    skeleton: 100
+    creeper: 75
+    spider: 75
+    enderman: 40
+    slime: 30
+    phantom: 20
   player-protection-radius: 64
   preserve-named-mobs: true
   preserve-tamed-mobs: true
@@ -80,7 +82,7 @@ mob-culling:
   preserve-boss-mobs: true
 
 redstone:
-  enabled: true
+  enabled: false
   limit-redstone-clock: true
   max-tick-rate: 10
   detect-redstone-clock: true
@@ -93,45 +95,20 @@ redstone:
   limit-piston-chain-length: 12
   smart-hoppers: true
 
-physics:
-  enabled: true
-  max-falling-blocks-per-tick: 20
-  optimize-liquid-flow: true
-  physics-range: 48
-  adaptive-throttling: true
-
 performance-monitor:
   enabled: true
-  interval-seconds: 30
-  auto-warn-threshold: true
-  tps-warn-threshold: 16.0
-  notify-admins: true
-  log-to-console: true
-  broadcast-warnings: false
-monitor:
-  enabled: true
+  interval-seconds: 60
   history-size: 30
   track-tps: true
   track-memory: true
-  track-entities: true
-  track-chunks: true
-  track-redstone: true
-  tps-alert-threshold: 16.0
-  alert-methods:
-    console: true
-    chat: true
-    actionbar: false
-
-anti-lag:
-  enabled: true
-  threshold-tps: 17.0
-  actions:
-    clear-items: true
-    clear-mobs: true
-    disable-mob-spawning: true
-    disable-mob-ai: true
-    suspend-redstone: true
-    suggest-gc: true
+  # World-wide scans are intentionally opt-in because they can be expensive.
+  track-entities: false
+  track-chunks: false
+  auto-warn-threshold: true
+  tps-warn-threshold: 16.0
+  notify-admins: true
+  log-to-console: false
+  broadcast-warnings: false
 
 compatibility:
   auto-detect-conflicts: true
@@ -144,34 +121,24 @@ compatibility:
     bedrock-optimizations: true
 
 config-analyzer:
-  enabled: true
+  enabled: false
   analyze-server-properties: true
   analyze-bukkit-yml: true
   analyze-spigot-yml: true
-  # Current Paper uses config/paper-global.yml and paper-world-defaults.yml,
-  # not the old single paper.yml format.
   analyze-paper-yml: false
   apply-changes: false
   create-backups: true
 
 memory-leak:
-  enabled: true
-  check-interval: 15
+  enabled: false
+  check-interval: 30
   detection-threshold: 3
   min-leak-threshold-mb: 50
   create-heap-dump: false
   show-leak-sources: true
-memory-leak-detection:
-  enabled: true
-  check-interval: 15
-  leak-threshold-mb: 50
-  high-memory-alerts: true
-  high-memory-threshold-percent: 80
-  dump-heap-on-leak: false
-  show-leak-sources: true
 
 entity-distance-limit:
-  enabled: true
+  enabled: false
   full-ai-radius: 32
   reduced-ai-radius: 64
   minimal-ai-radius: 96
@@ -183,7 +150,7 @@ entity-distance-limit:
   exempt-named-entities: true
 
 tnt-optimization:
-  enabled: true
+  enabled: false
   max-tnt-per-tick: 10
   batch-physics-updates: true
   max-explosions-per-tick: 5
@@ -191,10 +158,10 @@ tnt-optimization:
   optimize-particles: true
 
 task-optimization:
-  enabled: true
-  monitor-other-plugins: true
-  warn-inefficient: true
-  warn-inefficient-tasks: true
+  enabled: false
+  monitor-other-plugins: false
+  warn-inefficient: false
+  warn-inefficient-tasks: false
   min-task-time-ms: 5
   max-tasks-in-report: 20
 
@@ -205,18 +172,10 @@ network-optimization:
   reduce-distant-packets: false
   compression-level: 5
   visibility-percent: 85
-network:
-  enabled: false
-  batch-entity-packets: false
-  prioritize-player-focus: false
-  reduce-distant-packets: false
-  compression-level: 5
-  visibility-percent: 85
 
 afk-detection:
-  enabled: true
+  enabled: false
   timeout-seconds: 300
-  afk-timeout-seconds: 300
   reduce-view-distance: true
   afk-view-distance: 4
   notify-players: true
@@ -231,25 +190,23 @@ stress-test:
   auto-cleanup: true
 
 performance-reports:
-  enabled: true
-  auto-generate: true
+  enabled: false
+  auto-generate: false
   interval-minutes: 60
-  report-interval: 60
   history-days: 7
-  include-plugin-metrics: true
+  include-plugin-metrics: false
   export-to-web: false
-  max-reports: 30
+  max-reports: 10
 
 lag-prediction:
-  enabled: true
-  interval: 30
-  data-points: 60
+  enabled: false
+  interval: 60
+  data-points: 30
   tps-threshold: 18.0
   cpu-threshold: 0.8
   memory-threshold: 2048
-  notify-admins: true
+  notify-admins: false
   auto-tune: false
-  # Legacy embedded web interface is intentionally disabled.
   web-interface:
     enabled: false
     port: 8080
@@ -258,7 +215,7 @@ lag-prediction:
 
 integration-api:
   enabled: true
-  log-registrations: true
+  log-registrations: false
   allow-custom-optimizers: true
   allow-metrics-access: true
   default-access-level: 1
