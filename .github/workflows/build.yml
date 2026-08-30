@@ -2,8 +2,9 @@ name: Build MCOptimizer
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, 'optimize/**' ]
   pull_request:
+    branches: [ main ]
   workflow_dispatch:
 
 permissions:
@@ -15,6 +16,7 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -29,61 +31,29 @@ jobs:
       - name: Make Gradle wrapper executable
         run: chmod +x ./gradlew
 
-      - name: Verify Java, Gradle and version
-        shell: bash
-        run: |
-          set -euo pipefail
-          java -version
-          ./gradlew --version
-          CONFIG_VERSION=$(sed -n 's/^# Version: \([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\)$/\1/p' src/main/resources/config.yml | head -n 1)
-          test -n "$CONFIG_VERSION"
-          PROJECT_VERSION=$(./gradlew -q properties | sed -n 's/^version: //p' | head -n 1)
-          test "$PROJECT_VERSION" = "$CONFIG_VERSION"
-          echo "Version: $CONFIG_VERSION"
-          echo "VERSION=$CONFIG_VERSION" >> "$GITHUB_ENV"
-
-      - name: Build JAR
+      - name: Build and test
         run: ./gradlew --no-daemon clean build --stacktrace
 
-      - name: Validate built JAR metadata
+      - name: Validate plugin JAR
         shell: bash
         run: |
           set -euo pipefail
+          CONFIG_VERSION=$(sed -n 's/^# Version: \([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\)$/\1/p' src/main/resources/config.yml | head -n 1)
+          test -n "$CONFIG_VERSION"
           JAR=$(find build/libs -maxdepth 1 -type f -name '*.jar' ! -name '*-sources.jar' ! -name '*-javadoc.jar' | head -n 1)
           test -n "$JAR"
-          EXPECTED="MCOptimizer-${VERSION}.jar"
+          EXPECTED="MCOptimizer-${CONFIG_VERSION}.jar"
           test "$(basename "$JAR")" = "$EXPECTED"
+          unzip -p "$JAR" plugin.yml >/tmp/plugin.yml
+          grep -q '^main: com.mc.optimizer.OptimizerPlugin$' /tmp/plugin.yml
           cp "$JAR" "$EXPECTED"
-          echo "Built: $EXPECTED"
-
-      - name: Prepare release ZIP
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && env.SKIP_RELEASE != 'true'
-        run: |
-          set -euo pipefail
-          zip -r "MCOptimizer-${VERSION}.zip" \
-            src \
-            gradle \
-            build.gradle.kts \
-            settings.gradle.kts \
-            gradlew \
-            gradlew.bat \
-            README.md \
-            .gitignore
+          echo "VERSION=$CONFIG_VERSION" >> "$GITHUB_ENV"
 
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v4
         with:
           name: MCOptimizer-JAR-v${{ env.VERSION }}
           path: MCOptimizer-${{ env.VERSION }}.jar
-          if-no-files-found: error
-          retention-days: 30
-
-      - name: Upload ZIP artifact
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && env.SKIP_RELEASE != 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: MCOptimizer-ZIP-v${{ env.VERSION }}
-          path: MCOptimizer-${{ env.VERSION }}.zip
           if-no-files-found: error
           retention-days: 30
 
@@ -96,13 +66,9 @@ jobs:
           set -euo pipefail
           TAG="v${VERSION}"
           JAR="MCOptimizer-${VERSION}.jar"
-          ZIP="MCOptimizer-${VERSION}.zip"
           if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release upload "$TAG" "$JAR" "$ZIP" --clobber
+            gh release upload "$TAG" "$JAR" --clobber
             gh release edit "$TAG" --title "MCOptimizer v${VERSION}"
           else
-            gh release create "$TAG" "$JAR" "$ZIP" \
-              --title "MCOptimizer v${VERSION}" \
-              --generate-notes \
-              --latest
+            gh release create "$TAG" "$JAR" --title "MCOptimizer v${VERSION}" --generate-notes --latest
           fi
